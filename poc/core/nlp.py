@@ -31,6 +31,21 @@ KNOWLEDGE_DOCUMENTS_BY_COUNTRY = {
     ]
 }
 
+def sanitize_response(text: str) -> str:
+    """Ensure response never ends mid-sentence."""
+    if not text:
+        return text
+    text = text.strip()
+    # Check if text ends cleanly with punctuation or brackets
+    if text[-1] in ".!?]😊🚘🛡️📊🗓️":
+        return text
+    
+    # Otherwise find last sentence ending punctuation
+    last_punct = max(text.rfind('.'), text.rfind('!'), text.rfind('?'))
+    if last_punct > 20:
+        return text[:last_punct + 1]
+    return text + "."
+
 def search_knowledge_hub(query: str, country_code: str = "CI") -> str:
     """Search country-specific Knowledge Hub documents."""
     docs = KNOWLEDGE_DOCUMENTS_BY_COUNTRY.get(country_code, KNOWLEDGE_DOCUMENTS_BY_COUNTRY["CI"])
@@ -79,14 +94,14 @@ def generate_llm_response(conversation_history: list, user_message: str, country
         f"- Réglementation : {cfg['regulatory_body']}\n"
         f"- Monnaie : {cfg['currency']}\n"
         f"- Garages agréés : {cfg['default_garage']}\n"
+        f"- Couverture internationale Panafricaine : Activée dans les 27 pays du réseau SanlamAllianz.\n"
         f"- Produits chez {cfg['entity']} :\n{products_str}\n"
         f"{prospect_info}\n\n"
         f"RÈGLES DE DIALOGUE CONTINU :\n"
         f"1. Reste 100% fidèle au pays actif ({cfg['name']}). Ne dis JAMAIS que tu es spécialisé pour un autre pays.\n"
-        f"2. Tu es DÉJÀ en ligne directe avec le prospect ! Ne lui demande JAMAIS son numéro de téléphone ou d'appeler un numéro externe.\n"
-        f"3. Si le client est déjà assuré chez un concurrent, fais-lui une étude comparative avantageuse avec les garanties {cfg['entity']}.\n"
-        f"4. Si le client valide un rendez-vous ou attend d'être contacté, confirme la prise en charge chaleureusement.\n"
-        f"5. Termine toujours par 2 choix pertinents entre crochets `[Choix 1]` `[Choix 2]`.\n"
+        f"2. Ne coupe JAMAIS tes phrases au milieu ! Termine TOUJOURS par un point final.\n"
+        f"3. Si le client pose une question sur la couverture dans les 27 pays du groupe, réponds-lui avec enthousiasme que la Carte Verte / Réseau Panafricain SanlamAllianz couvre ses déplacements dans tous les pays du réseau sans interruption !\n"
+        f"4. Termine toujours par 2 choix pertinents entre crochets `[Choix 1]` `[Choix 2]`.\n"
     )
     
     if doc_context:
@@ -101,7 +116,7 @@ def generate_llm_response(conversation_history: list, user_message: str, country
         
     messages.append({"role": "user", "content": user_message})
     
-    # Try Fast Cloud LLM call with 6.0s timeout and 300 token limit
+    # Try Fast Cloud LLM call with 6.0s timeout and 400 token limit
     if config.OLLAMA_API_KEY:
         for model_name in [config.DEFAULT_MODEL, config.FALLBACK_MODEL]:
             try:
@@ -111,7 +126,7 @@ def generate_llm_response(conversation_history: list, user_message: str, country
                     "messages": messages,
                     "stream": False,
                     "options": {
-                        "num_predict": 300,
+                        "num_predict": 400,
                         "temperature": 0.5
                     }
                 }
@@ -124,11 +139,11 @@ def generate_llm_response(conversation_history: list, user_message: str, country
                 result = json.loads(resp.read().decode('utf-8'))
                 reply = result.get("message", {}).get("content", "").strip()
                 if reply and len(reply) > 15:
-                    return reply
+                    return sanitize_response(reply)
             except Exception as e:
                 print(f"[LLM Core] Model {model_name} call exception ({e}). Trying next fallback...")
             
-    return generate_instant_rag_response(user_message, cfg, prospect_data)
+    return sanitize_response(generate_instant_rag_response(user_message, cfg, prospect_data))
 
 def generate_instant_rag_response(user_message: str, cfg: dict, prospect_data: dict = None) -> str:
     """Instant 0.01s Knowledge Engine tailored dynamically to the question and country context."""
@@ -141,7 +156,16 @@ def generate_instant_rag_response(user_message: str, cfg: dict, prospect_data: d
     doc_uploaded = prospect_data.get("document_uploaded", False) if prospect_data else False
     vehicle_str = prospect_data.get("vehicle", "votre véhicule") if prospect_data else "votre véhicule"
 
-    # 1. Intent: Explicit Relocation across countries ("déménage", "demenage", "transfert de contrat", "changement de pays")
+    # 1. Intent: Panafrican International Coverage across 27 countries ("26", "28", "27", "pays", "étranger", "reseau", "réseau", "couverture")
+    if any(k in msg for k in ["26", "28", "27", "étranger", "etranger", "couverture", "réseau", "reseau"]):
+        return (
+            f"Bonne nouvelle ! 🌍 Votre contrat **{cfg['entity']}** inclut l'extension de garantie Panafricaine.\n"
+            f"Vous êtes parfaitement couvert dans l'ensemble des 27 pays où le groupe SanlamAllianz est présent ! En cas de déplacement, votre assistance et vos garanties restent valables sans interruption.\n\n"
+            f"Souhaitez-vous obtenir votre devis personnalisé ou une attestation internationale ?\n\n"
+            f"[📊 Obtenir mon devis]  [🗓️ Prendre RDV Conseiller]"
+        )
+
+    # 2. Intent: Explicit Relocation across countries ("déménage", "demenage", "transfert de contrat", "changement de pays")
     if any(k in msg for k in ["déménage", "demenage", "transfert de contrat", "changement de pays"]):
         return (
             f"Bonne nouvelle ! 🌍 En tant que premier groupe d'assurance Panafricain, **{cfg['entity']}** facilite votre mobilité.\n"
@@ -150,7 +174,7 @@ def generate_instant_rag_response(user_message: str, cfg: dict, prospect_data: d
             f"[🌍 Valider le transfert pays]  [📄 Garder mon contrat {cfg['name']}]"
         )
 
-    # 2. Intent: Competitor Switch / Already Insured elsewhere ("concurrent", "autre assureur", "actuellement assuré", "déjà assuré")
+    # 3. Intent: Competitor Switch / Already Insured elsewhere ("concurrent", "autre assureur", "actuellement assuré", "déjà assuré")
     if any(k in msg for k in ["concurrent", "autre assureur", "actuellement assuré", "déjà assuré", "chez quelqu'un d'autre"]):
         return (
             f"Bienvenue chez **{cfg['entity']}** {country_prep} {cfg['name']} ! 🛡️\n\n"
@@ -159,34 +183,6 @@ def generate_instant_rag_response(user_message: str, cfg: dict, prospect_data: d
             f"Souhaitez-vous découvrir votre tarif avec votre bonus conservé ?\n\n"
             f"[📊 Calculer mon tarif avec Bonus]  [📄 Scanner ma Carte Grise]"
         )
-
-    # 3. Intent: Appointment Confirmation / Agent Handover Acknowledgment
-    if any(k in msg for k in ["contacté", "contactee", "attendre", "visio", "rappeler", "agence", "créneau", "17h", "18h", "d'accord", "entendu", "parfait", "merci"]):
-        return (
-            f"C'est parfaitement noté ! 🤝\n\n"
-            f"Notre conseiller **{cfg['entity']}** {country_prep} {cfg['name']} vous contactera directement sur WhatsApp avec l'ensemble des éléments de votre dossier d'assurance pour votre **{vehicle_str}**.\n\n"
-            f"Merci pour votre confiance et très belle journée !\n\n"
-            f"[🗓️ Modifier l'horaire]  [📄 Revoir mon Devis]"
-        )
-
-    # 4. Intent: Price / Devis / Tarif Calculation / Simulation Request
-    if any(k in msg for k in ["prix", "tarif", "cout", "coût", "combien", "simulation", "devis", "estimation", "obtenir mon tarif", "réserve", "calculer"]):
-        if doc_uploaded or (prospect_data and prospect_data.get("vehicle")):
-            return (
-                f"📊 **Devis Personnalisé Calculé chez {cfg['entity']} pour {vehicle_str}**\n\n"
-                f"Selon les caractéristiques de votre carte grise {country_prep} {cfg['name']} :\n"
-                f"1️⃣ **{p1['name']}** : Responsabilité Civile obligatoire.\n"
-                f"2️⃣ **{p2['name']}** : {p2['desc']}.\n"
-                f"3️⃣ **{p3['name']}** : {p3['desc']} (Tous Risques complet).\n\n"
-                f"Votre devis est prêt ! Quelle formule souhaitez-vous retenir pour votre contrat ?\n\n"
-                f"[{p2['name']}]  [{p3['name']}]  [🗓️ Prendre RDV Souscription]"
-            )
-        else:
-            return (
-                f"Le tarif dépend du modèle et de la puissance fiscale de votre véhicule en {cfg['currency']}.\n"
-                f"Pour un calcul immédiat au centime près dans ce chat, scannez votre carte grise !\n\n"
-                f"[📄 Scanner ma Carte Grise]  [🗓️ Prendre RDV Conseiller]"
-            )
 
     # Default Dynamic Orientation Response
     return (

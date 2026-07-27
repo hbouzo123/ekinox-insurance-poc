@@ -481,7 +481,6 @@
                             <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>
                         </button>
 
-                        <!-- IN-CALL OCR DOCUMENT / CARTE GRISE UPLOAD BUTTON -->
                         <button class="call-btn-circle btn-upload-voice" onclick="triggerUpload()" title="Joindre ma Carte Grise pendant l'appel">
                             <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
                         </button>
@@ -573,6 +572,8 @@ Que souhaitez-vous faire ?
         let callSeconds = 0;
         let synth = window.speechSynthesis;
         let bestFrenchVoice = null;
+        let silenceDebounceTimer = null;
+        let currentVoiceBuffer = '';
 
         function loadHighQualityVoice() {
             if (!synth) return;
@@ -594,10 +595,10 @@ Que souhaitez-vous faire ?
         if (SpeechRecognition) {
             recognition = new SpeechRecognition();
             recognition.lang = 'fr-FR';
-            recognition.continuous = false;
+            recognition.continuous = true; // CONTINUOUS CAPTURE TO PREVENT MID-SENTENCE USER CUT-OFF
             recognition.interimResults = true;
 
-            recognition.onresult = async function(event) {
+            recognition.onresult = function(event) {
                 if (isProcessing || !isCallActive) return;
                 
                 let transcript = '';
@@ -607,16 +608,25 @@ Que souhaitez-vous faire ?
                 
                 if (!transcript || transcript.trim().length === 0) return;
 
-                document.getElementById("call-transcript-box").innerHTML = `🗣️ <strong>Vous :</strong> "${transcript}"`;
+                currentVoiceBuffer = transcript;
+                document.getElementById("call-transcript-box").innerHTML = `🗣️ <strong>Vous :</strong> "${currentVoiceBuffer}"`;
 
-                if (event.results[0].isFinal) {
-                    isProcessing = true;
-                    document.getElementById("call-status-text").innerText = "Réflexion du conseiller IA...";
-                    document.getElementById("call-avatar-ring").className = "voice-call-avatar-ring";
-                    document.getElementById("call-audio-spectrum").classList.remove("active");
+                // Debounce speech silence for 1800ms before sending speech buffer to AI
+                if (silenceDebounceTimer) clearTimeout(silenceDebounceTimer);
+                
+                silenceDebounceTimer = setTimeout(async () => {
+                    if (!isProcessing && isCallActive && currentVoiceBuffer.trim().length > 0) {
+                        isProcessing = true;
+                        try { recognition.stop(); } catch(e){}
+                        document.getElementById("call-status-text").innerText = "Réflexion du conseiller IA...";
+                        document.getElementById("call-avatar-ring").className = "voice-call-avatar-ring";
+                        document.getElementById("call-audio-spectrum").classList.remove("active");
 
-                    await processVoiceInput(transcript);
-                }
+                        const textToSend = currentVoiceBuffer;
+                        currentVoiceBuffer = '';
+                        await processVoiceInput(textToSend);
+                    }
+                }, 1800);
             };
 
             recognition.onerror = function(event) {
@@ -933,7 +943,6 @@ Comment souhaitez-vous démarrer ?
                 parseAndAppendMessage("assistant", `✅ Carte grise analysée par OCR !\n\n[📊 Obtenir mon tarif personnalisé] [🗓️ Prendre RDV avec un conseiller]`);
                 updateIntelPanel(data.prospect_state);
 
-                // If Voice Call is currently active, announce document ingestion dynamically in speech without ending call!
                 if (isCallActive) {
                     isProcessing = true;
                     const voiceNotice = `J'ai bien reçu et analysé votre carte grise par OCR pour ${vehicleName} ! Votre devis est calculé. Souhaitez-vous connaître votre tarif personnalisé Auto Platinum ?`;
