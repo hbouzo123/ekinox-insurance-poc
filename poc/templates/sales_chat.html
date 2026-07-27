@@ -574,6 +574,7 @@ Que souhaitez-vous faire ?
         let bestFrenchVoice = null;
         let silenceDebounceTimer = null;
         let currentVoiceBuffer = '';
+        let ttsSafetyTimer = null;
 
         function loadHighQualityVoice() {
             if (!synth) return;
@@ -729,36 +730,46 @@ Que souhaitez-vous faire ?
             if (!synth) { isProcessing = false; restartListeningLoop(); return; }
             
             synth.cancel();
+            if (ttsSafetyTimer) clearTimeout(ttsSafetyTimer);
 
             document.getElementById("call-status-text").innerText = "Le conseiller répond... 🔊";
             document.getElementById("call-avatar-ring").className = "voice-call-avatar-ring speaking";
             document.getElementById("call-audio-spectrum").classList.add("active");
 
-            let speechText = text.replace(/[*_#]/g, '').replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '');
+            let speechText = text.replace(/\[([^\]]+)\]/g, '').replace(/[*_#]/g, '').replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').trim();
 
             const utterance = new SpeechSynthesisUtterance(speechText);
-            utterance.lang = 'fr-FR';
             
-            loadHighQualityVoice();
-            if (bestFrenchVoice) utterance.voice = bestFrenchVoice;
+            if (/[\u0600-\u06FF]/.test(speechText)) {
+                utterance.lang = 'ar-SA';
+            } else {
+                utterance.lang = 'fr-FR';
+                loadHighQualityVoice();
+                if (bestFrenchVoice) utterance.voice = bestFrenchVoice;
+            }
+
             utterance.rate = 0.95;
             utterance.pitch = 1.0;
             utterance.volume = 1.0;
 
-            utterance.onend = function() {
+            const onSpeechFinished = function() {
+                if (ttsSafetyTimer) clearTimeout(ttsSafetyTimer);
                 document.getElementById("call-avatar-ring").className = "voice-call-avatar-ring";
                 document.getElementById("call-audio-spectrum").classList.remove("active");
                 isProcessing = false;
                 restartListeningLoop();
             };
 
-            utterance.onerror = function(err) {
-                console.error("SpeechSynthesis error:", err);
-                document.getElementById("call-avatar-ring").className = "voice-call-avatar-ring";
-                document.getElementById("call-audio-spectrum").classList.remove("active");
-                isProcessing = false;
-                restartListeningLoop();
-            };
+            utterance.onend = onSpeechFinished;
+            utterance.onerror = onSpeechFinished;
+
+            // Chrome Web Speech Safety Net (force reset after estimated speech length max 6s)
+            const fallbackDelay = Math.max(3000, Math.min(7000, speechText.length * 60));
+            ttsSafetyTimer = setTimeout(() => {
+                console.warn("[TTS Safety Net] Chrome TTS timeout fallback triggered.");
+                synth.cancel();
+                onSpeechFinished();
+            }, fallbackDelay);
 
             synth.speak(utterance);
         }
@@ -783,6 +794,7 @@ Que souhaitez-vous faire ?
             isCallActive = false;
             isProcessing = false;
             if (synth) synth.cancel();
+            if (ttsSafetyTimer) clearTimeout(ttsSafetyTimer);
             if (recognition) try { recognition.stop(); } catch(e){}
             clearInterval(callTimerInterval);
 
