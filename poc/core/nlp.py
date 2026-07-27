@@ -72,8 +72,9 @@ def generate_llm_response(conversation_history: list, user_message: str, country
             prospect_info += f"\n- Rendez-vous fixé : {prospect_data.get('appointment')}"
 
     system_prompt = (
-        f"Tu es le Chargé de Clientèle Automobile SanlamAllianz {country_prep} {cfg['name']} ({cfg['entity']}).\n"
-        f"Tu dialogues en direct avec le prospect sur WhatsApp/Vocal. Sois chaleureux, naturel et très réactif (40 à 75 mots max).\n\n"
+        f"TU ES EXCLUSIVEMENT LE CHARGÉ DE CLIENTÈLE SANLAMALLIANZ {country_prep.upper()} {cfg['name'].upper()} ({cfg['entity']}).\n"
+        f"LE PAYS ACTIF SELECTIONNÉ EST LE/LA {cfg['name'].upper()} ({cfg['code']}). NE CONFONDS JAMAIS AVEC UN AUTRE PAYS !\n"
+        f"Toutes tes réponses doivent concerner la filiale {cfg['entity']} au/en {cfg['name']} avec les formules locales ({products_str}) en {cfg['currency']}.\n\n"
         f"CONTEXTE ASSUREUR LOCAL :\n"
         f"- Réglementation : {cfg['regulatory_body']}\n"
         f"- Monnaie : {cfg['currency']}\n"
@@ -81,10 +82,10 @@ def generate_llm_response(conversation_history: list, user_message: str, country
         f"- Produits chez {cfg['entity']} :\n{products_str}\n"
         f"{prospect_info}\n\n"
         f"RÈGLES DE DIALOGUE CONTINU :\n"
-        f"1. Ne répète JAMAIS de menu générique si le client pose une question spécifique sur son contrat, ses options de paiement ou son déménagement.\n"
+        f"1. Reste 100% fidèle au pays actif ({cfg['name']}). Ne dis JAMAIS que tu es spécialisé pour un autre pays.\n"
         f"2. Tu es DÉJÀ en ligne directe avec le prospect ! Ne lui demande JAMAIS son numéro de téléphone ou d'appeler un numéro externe.\n"
-        f"3. Si le client déménage dans un autre pays (Maroc, Sénégal), confirme la continuité de couverture grâce au réseau Panafricain SanlamAllianz.\n"
-        f"4. Si le client achète une voiture ancienne/collection (ex: >25 ans), confirme qu'on peut l'assurer avec expertise d'état et applique la réduction véhicule de collection.\n"
+        f"3. Si le client est déjà assuré chez un concurrent, fais-lui une étude comparative avantageuse avec les garanties {cfg['entity']}.\n"
+        f"4. Si le client valide un rendez-vous ou attend d'être contacté, confirme la prise en charge chaleureusement.\n"
         f"5. Termine toujours par 2 choix pertinents entre crochets `[Choix 1]` `[Choix 2]`.\n"
     )
     
@@ -140,63 +141,43 @@ def generate_instant_rag_response(user_message: str, cfg: dict, prospect_data: d
     doc_uploaded = prospect_data.get("document_uploaded", False) if prospect_data else False
     vehicle_str = prospect_data.get("vehicle", "votre véhicule") if prospect_data else "votre véhicule"
 
-    # 1. Intent: Cross-country relocation & Inter-entity coverage (CI, MA, SN)
-    if any(k in msg for k in ["déménage", "demenage", "maroc", "casablanca", "sénégal", "senegal", "dakar", "transfert", "pays"]):
+    # 1. Intent: Explicit Relocation across countries ("déménage", "demenage", "transfert de contrat", "changement de pays")
+    if any(k in msg for k in ["déménage", "demenage", "transfert de contrat", "changement de pays"]):
         return (
             f"Bonne nouvelle ! 🌍 En tant que premier groupe d'assurance Panafricain, **{cfg['entity']}** facilite votre mobilité.\n"
-            f"Votre contrat peut être transféré directement vers notre filiale locale (Sanlam Maroc / SanlamAllianz Sénégal) sans pénalité ni perte d'ancienneté !\n\n"
+            f"Votre contrat peut être transféré directement vers notre filiale locale sans pénalité ni perte d'ancienneté !\n\n"
             f"Souhaitez-vous que notre pôle International prépare le transfert de votre dossier ?\n\n"
             f"[🌍 Valider le transfert pays]  [📄 Garder mon contrat {cfg['name']}]"
         )
 
-    # 2. Intent: Appointment Confirmation / Agent Handover Acknowledgment
+    # 2. Intent: Competitor Switch / Already Insured elsewhere ("concurrent", "autre assureur", "actuellement assuré", "déjà assuré")
+    if any(k in msg for k in ["concurrent", "autre assureur", "actuellement assuré", "déjà assuré", "chez quelqu'un d'autre"]):
+        return (
+            f"Bienvenue chez **{cfg['entity']}** {country_prep} {cfg['name']} ! 🛡️\n\n"
+            f"Nous gérons intégralement la résiliation de votre ancien contrat auprès de votre assureur actuel sans frais ni interruption de garantie.\n"
+            f"De plus, nous reprenons 100% de votre Bonus d'ancienneté avec une réduction préférentielle !\n\n"
+            f"Souhaitez-vous découvrir votre tarif avec votre bonus conservé ?\n\n"
+            f"[📊 Calculer mon tarif avec Bonus]  [📄 Scanner ma Carte Grise]"
+        )
+
+    # 3. Intent: Appointment Confirmation / Agent Handover Acknowledgment
     if any(k in msg for k in ["contacté", "contactee", "attendre", "visio", "rappeler", "agence", "créneau", "17h", "18h", "d'accord", "entendu", "parfait", "merci"]):
         return (
             f"C'est parfaitement noté ! 🤝\n\n"
-            f"Notre conseiller **{cfg['entity']}** vous contactera directement sur WhatsApp avec l'ensemble des éléments de votre dossier d'assurance pour votre **{vehicle_str}**.\n\n"
+            f"Notre conseiller **{cfg['entity']}** {country_prep} {cfg['name']} vous contactera directement sur WhatsApp avec l'ensemble des éléments de votre dossier d'assurance pour votre **{vehicle_str}**.\n\n"
             f"Merci pour votre confiance et très belle journée !\n\n"
             f"[🗓️ Modifier l'horaire]  [📄 Revoir mon Devis]"
         )
 
-    # 3. Intent: Classic / 25-Year-Old Vehicle Inquiry ("25 ans", "collection", "ancienne", "vieux")
-    if any(k in msg for k in ["25 ans", "collection", "ancienne", "vieux"]):
-        return (
-            f"Absolument ! Chez **{cfg['entity']}**, nous assurons parfaitement les véhicules de plus de 25 ans en Tous Risques (**{p3['name']}**).\n"
-            f"Une simple vérification d'état est effectuée, et vous bénéficiez du tarif privilégié véhicule de collection !\n\n"
-            f"Souhaitez-vous calculer votre devis immédiat ?\n\n"
-            f"[📊 Calculer mon tarif]  [📄 Envoyer ma Carte Grise]"
-        )
-
-    # 4. Intent: Recommendation for New / Upcoming Vehicle ("nouvelle", "neuve", "sortir la semaine prochaine", "conseille", "recommande", "touriste", "pourquoi")
-    if any(k in msg for k in ["nouvelle", "neuf", "neuve", "semaine prochaine", "conseille", "recommande", "pourquoi", "touriste"]):
-        return (
-            f"Félicitations pour votre nouvelle voiture ! 🚘\n\n"
-            f"Pour un véhicule neuf, je vous recommande vivement notre formule Tous Risques (**{p3['name']}**).\n"
-            f"Pourquoi ? Parce qu'une voiture neuve est un investissement majeur : en cas de collision, de vol ou de dommage, vous êtes intégralement protégé et indemnisé sans mauvaise surprise !\n\n"
-            f"Souhaitez-vous calculer votre tarif personnalisé ?\n\n"
-            f"[📊 Obtenir mon tarif personnalisé]  [Découvrir {p2['name']}]"
-        )
-
-    # 5. Intent: Simplification / Reformulation Request ("pas compris", "reformuler", "résumé", "expliquer", "simple")
-    if any(k in msg for k in ["pas compris", "reformuler", "résumé", "expliquer simplement", "synthèse", "clair"]):
-        return (
-            f"En résumé très simple :\n"
-            f"• **{p1['name']}** : Le minimum légal pour rouler (dégâts causés aux tiers).\n"
-            f"• **{p2['name']}** : Protège contre le vol, l'incendie et le bris de glace.\n"
-            f"• **{p3['name']}** : Couverture intégrale (indemnise votre voiture en cas d'accident responsable).\n\n"
-            f"Quelle protection préférez-vous ?\n\n"
-            f"[Choisir {p2['name']}]  [Choisir {p3['name']}]"
-        )
-
-    # 6. Intent: Price / Devis / Tarif Calculation / Simulation Request
+    # 4. Intent: Price / Devis / Tarif Calculation / Simulation Request
     if any(k in msg for k in ["prix", "tarif", "cout", "coût", "combien", "simulation", "devis", "estimation", "obtenir mon tarif", "réserve", "calculer"]):
         if doc_uploaded or (prospect_data and prospect_data.get("vehicle")):
             return (
-                f"📊 **Devis Personnalisé Calculé pour {vehicle_str}**\n\n"
+                f"📊 **Devis Personnalisé Calculé chez {cfg['entity']} pour {vehicle_str}**\n\n"
                 f"Selon les caractéristiques de votre carte grise {country_prep} {cfg['name']} :\n"
                 f"1️⃣ **{p1['name']}** : Responsabilité Civile obligatoire.\n"
-                f"2️⃣ **{p2['name']}** : Tiers Amélioré Vol & Incendie.\n"
-                f"3️⃣ **{p3['name']}** : Protection Tous Risques complète (Bonus Collection inclus).\n\n"
+                f"2️⃣ **{p2['name']}** : {p2['desc']}.\n"
+                f"3️⃣ **{p3['name']}** : {p3['desc']} (Tous Risques complet).\n\n"
                 f"Votre devis est prêt ! Quelle formule souhaitez-vous retenir pour votre contrat ?\n\n"
                 f"[{p2['name']}]  [{p3['name']}]  [🗓️ Prendre RDV Souscription]"
             )
