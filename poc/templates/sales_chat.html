@@ -635,20 +635,23 @@ Que souhaitez-vous faire ?
                     document.getElementById("call-transcript-box").innerHTML = "<strong>⚠️ Accès au microphone refusé.</strong><br>Veuillez autoriser le microphone dans la barre d'adresse du navigateur (icône 🔒).";
                     return;
                 }
-                if (isCallActive && !isMuted && !isProcessing && synth && !synth.speaking) {
+                if (isCallActive && !isMuted && synth && !synth.speaking) {
+                    isProcessing = false;
                     setTimeout(restartListeningLoop, 300);
                 }
             };
 
             recognition.onend = function() {
-                if (isCallActive && !isMuted && !isProcessing && synth && !synth.speaking) {
+                if (isCallActive && !isMuted && synth && !synth.speaking) {
+                    isProcessing = false;
                     setTimeout(restartListeningLoop, 300);
                 }
             };
         }
 
         function restartListeningLoop() {
-            if (!isCallActive || isMuted || isProcessing || (synth && synth.speaking)) return;
+            if (!isCallActive || isMuted || (synth && synth.speaking)) return;
+            isProcessing = false;
             document.getElementById("call-status-text").innerText = "Le conseiller écoute... 🎙️";
             document.getElementById("call-avatar-ring").className = "voice-call-avatar-ring listening";
             try { recognition.start(); } catch(e){}

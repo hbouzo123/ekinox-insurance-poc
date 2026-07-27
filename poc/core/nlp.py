@@ -63,7 +63,8 @@ def detect_language_mode(user_message: str) -> str:
     text_lower = text.lower()
     derja_keywords = [
         "aychik", "aaffia", "afia", "marhaba", "chneyya", "bahi", "behi", "labes", "aslema",
-        "khouya", "shokran", "sahha", "yatik", "bch", "nحب", "kifech", "bchnekhou", "mrigal"
+        "khouya", "shokran", "sahha", "yatik", "bch", "nحب", "kifech", "bchnekhou", "mrigal",
+        "arabi", "derja", "3arbi", "tounsi", "tunisien"
     ]
     if any(k in text_lower for k in derja_keywords):
         return "DERJA"
@@ -114,9 +115,10 @@ def generate_llm_response(conversation_history: list, user_message: str, country
     system_prompt = (
         f"Tu es le Chargé de Clientèle Automobile SanlamAllianz {country_prep} {cfg['name']} ({cfg['entity']}).\n\n"
         f"RÈGLE ABSOLUE DE MIROIR LINGUISTIQUE (STRICT LANGUAGE MIRRORING) :\n"
-        f"1. Si le message de l'utilisateur est en FRANÇAIS -> Tu dois répondre 100% en FRANÇAIS naturel et fluide.\n"
-        f"2. Si le message est en ARABE LITTÉRAIRE (العربية الفصحى) -> Tu dois répondre 100% en ARABE LITTÉRAIRE (العربية الفصحى).\n"
-        f"3. Si le message est en DIALECTE TUNISIEN / MAGHRÉBIN (Derja) -> Tu dois répondre 100% en DIALECTE TUNISIEN / MAGHRÉBIN (اللهجة التونسية/المغاربية) fluide et chaleureux !\n\n"
+        f"1. Si le prospect demande 'est-ce que tu peux me comprendre en arabe' ou s'exprime en arabe/dialecte tunisien -> Réponds en confirmant chaleureusement en Arabe et en Dialecte (نعم بالطبع ! أستطيع فهمك والتحدث معك باللغة العربية وباللهجة التونسية).\n"
+        f"2. Si le message de l'utilisateur est en FRANÇAIS -> Réponds 100% en FRANÇAIS naturel et fluide.\n"
+        f"3. Si le message est en ARABE LITTÉRAIRE -> Réponds 100% en ARABE LITTÉRAIRE (العربية الفصحى).\n"
+        f"4. Si le message est en DIALECTE TUNISIEN -> Réponds 100% en DIALECTE TUNISIEN (اللهجة التونسية) fluide !\n\n"
         f"RÈGLES DE STYLE :\n"
         f"- N'utilise AUCUN caractère de mise en forme markdown (PAS d'étoiles **, PAS de dièses #, PAS de parenthèses répétitives).\n"
         f"- Si le nom du prospect est connu ({prospect_data.get('name', '') if prospect_data else ''}), adresse-toi à lui naturellement.\n"
@@ -181,11 +183,21 @@ def generate_instant_rag_response(user_message: str, cfg: dict, prospect_data: d
     vehicle_str = prospect_data.get("vehicle", "votre véhicule") if prospect_data else "votre véhicule"
     name_str = prospect_data.get("name", "") if prospect_data else ""
     
+    # 0. Intent: Language / Arabic / Derja Capability Inquiry ("arabe", "dialecte", "tunisien", "derja", "arabi", "comprendre")
+    if any(k in msg for k in ["arabe", "dialecte", "tunisien", "derja", "arabi", "تكلم", "عربي", "comprendre en arabe"]):
+        name_prefix = f" يا {name_str}" if name_str and name_str != "Prospect Inconnu" else ""
+        return (
+            f"نعم بالطبع{name_prefix} ! أستطيع فهمك والتحدث معك باللغة العربية وكذلك باللهجة التونسية والمغاربية.\n\n"
+            f"Na3am bteb3a ! N'effhemk w n'tkalem m3ak bel 3arbi w bel derja tunisie.\n\n"
+            f"Oui tout à fait, je vous comprends parfaitement en Arabe et en dialecte Tunisien ! Comment puis-je vous aider pour votre assurance ?\n\n"
+            f"[Obtenir mon devis]  [Prendre Rendez-vous]"
+        )
+
     # 1. ARABIC LANGUAGE MODE (Standard Arabic Script)
     if lang_mode == "ARABIC":
         name_prefix = f" يا {name_str}" if name_str and name_str != "Prospect Inconnu" else ""
         return (
-            f"مرحباً بك{name_prefix} في **{cfg['entity']}** ! 🛡️\n"
+            f"مرحباً بك{name_prefix} في {cfg['entity']} ! 🛡️\n"
             f"يسعدنا جداً تقديم أفضل عروض تأمين السيارات المناسبة لسيارتك {vehicle_str}.\n"
             f"نقدم لك ثلاث صيغ ممتازة: 1. التأمين الأساسي 2. التأمين المكتمل 3. التأمين الشامل للأخطار.\n\n"
             f"[الحصول على العرض]  [حجز موعد]"
