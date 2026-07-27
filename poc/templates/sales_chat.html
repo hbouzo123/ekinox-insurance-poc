@@ -674,6 +674,14 @@ Que souhaitez-vous faire ?
                 return;
             }
 
+            // UNLOCK CHROME HTTPS AUDIO CONTEXT ON USER CLICK
+            if (synth) {
+                try {
+                    synth.cancel();
+                    if (synth.paused) synth.resume();
+                } catch(e){}
+            }
+
             isCallActive = true;
             isMuted = false;
             isProcessing = false;
@@ -732,6 +740,11 @@ Que souhaitez-vous faire ?
             
             synth.cancel();
             if (ttsSafetyTimer) clearTimeout(ttsSafetyTimer);
+
+            // FORCE RESUME CHROME AUDIO CONTEXT ON SECURE HTTPS (RENDER)
+            try {
+                if (synth.paused) synth.resume();
+            } catch(e){}
 
             document.getElementById("call-status-text").innerText = "Le conseiller répond... 🔊";
             document.getElementById("call-avatar-ring").className = "voice-call-avatar-ring speaking";
