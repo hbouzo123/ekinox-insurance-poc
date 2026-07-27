@@ -39,7 +39,7 @@ def clean_natural_text(text: str) -> str:
     # Remove markdown bold/italic asterisks & underscores
     cleaned = re.sub(r'[*_#]', '', text)
     
-    # Remove duplicate parenthesis text like (Tiers) (Tiers) or (Tous Risques) (Tous Risques)
+    # Remove duplicate parenthesis text like (Tiers) (Tiers)
     cleaned = re.sub(r'\(([^)]+)\)\s*\(\1\)', r'(\1)', cleaned)
     
     # Clean multiple spaces & normalize newlines
@@ -97,9 +97,9 @@ def generate_llm_response(conversation_history: list, user_message: str, country
         f"Tu dialogues naturellement sur WhatsApp et au téléphone avec votre prospect.\n\n"
         f"DIRECTIVES RIGOUREUSES DE STYLE PARLÉ ET FLUIDE :\n"
         f"1. Rédige un français naturel, fluide, chaleureux et direct. N'utilise AUCUN caractère spécial de mise en forme (PAS d'étoiles **, PAS de dièses #, PAS de parenthèses superflues).\n"
-        f"2. Ne répète jamais les mêmes termes à la suite. Écris simplement le nom des formules : Auto Classique, Auto Zen, Auto Platinum.\n"
-        f"3. Présente les devis sous forme de phrases claires et agréables à lire et à entendre à voix haute.\n"
-        f"4. Sois concis et accueillant (50 à 80 mots maximum).\n"
+        f"2. Si le prospect utilise du dialecte maghrébin/tunisien (ex: 'aychik', 'marhaba', 'bahi', 'labes', 'khouya', 'shokran'), réponds avec chaleur et courtoisie ('Marhaba ! Yatik el afia. C'est un grand plaisir...').\n"
+        f"3. Si le prénom du prospect est connu ({prospect_data.get('name', '') if prospect_data else ''}), utilise-le avec bienveillance.\n"
+        f"4. Présente les devis sous forme de phrases claires et agréables à lire et à entendre à voix haute.\n"
         f"5. Termine toujours par 2 propositions de choix entre crochets simple `[Choix 1]` `[Choix 2]`.\n\n"
         f"CONTEXTE OFFRES ET GARANTIES :\n"
         f"- Monnaie : {cfg['currency']}\n"
@@ -160,9 +160,17 @@ def generate_instant_rag_response(user_message: str, cfg: dict, prospect_data: d
     doc_uploaded = prospect_data.get("document_uploaded", False) if prospect_data else False
     vehicle_str = prospect_data.get("vehicle", "votre véhicule") if prospect_data else "votre véhicule"
     name_str = prospect_data.get("name", "") if prospect_data else ""
-    greeting_name = f" M. {name_str}" if name_str and name_str != "Prospect Inconnu" else ""
+    greeting_name = f" {name_str}" if name_str and name_str != "Prospect Inconnu" else ""
 
-    # 1. Intent: Price / Devis / Tarif Calculation Request for all 3 formulas
+    # 1. Intent: Maghrebi / Tunisian Dialect Greeting & Courtesy
+    if any(k in msg for k in ["aychik", "aaffia", "afia", "marhaba", "chneyya", "bahi", "labes", "aslema", "khouya", "shokran", "sahha", "yatik"]):
+        return (
+            f"Marhaba{greeting_name} ! Yatik el afia. C'est un grand plaisir d'échanger avec vous.\n\n"
+            f"Je suis à votre entière disposition pour calculer le tarif idéal pour votre {vehicle_str} ou répondre à toutes vos questions.\n\n"
+            f"[Obtenir mon devis]  [Prendre Rendez-vous]"
+        )
+
+    # 2. Intent: Price / Devis / Tarif Calculation Request for all 3 formulas
     if any(k in msg for k in ["trois devis", "3 devis", "pour chaque formule", "combien ca coute", "combien ça me coûte", "prix pour chaque"]):
         if country_code == "CI":
             return (
@@ -192,7 +200,7 @@ def generate_instant_rag_response(user_message: str, cfg: dict, prospect_data: d
                 f"[Choisir Auto Zen Teranga]  [Choisir Tous Risques Avantage]"
             )
 
-    # 2. Intent: International Coverage across 27 countries
+    # 3. Intent: International Coverage across 27 countries
     if any(k in msg for k in ["26", "28", "27", "étranger", "etranger", "couverture", "réseau", "reseau"]):
         return (
             f"Bonne nouvelle{greeting_name} ! Votre contrat {cfg['entity']} inclut la garantie Panafricaine. "
@@ -201,7 +209,7 @@ def generate_instant_rag_response(user_message: str, cfg: dict, prospect_data: d
             f"[Obtenir mon devis]  [Prendre RDV Conseiller]"
         )
 
-    # 3. Intent: Explicit Relocation across countries
+    # 4. Intent: Explicit Relocation across countries
     if any(k in msg for k in ["déménage", "demenage", "transfert de contrat", "changement de pays"]):
         return (
             f"En tant que premier groupe d'assurance Panafricain, {cfg['entity']} facilite votre mobilité. "
@@ -209,7 +217,7 @@ def generate_instant_rag_response(user_message: str, cfg: dict, prospect_data: d
             f"[Valider le transfert pays]  [Garder mon contrat actuel]"
         )
 
-    # 4. Intent: Competitor Switch
+    # 5. Intent: Competitor Switch
     if any(k in msg for k in ["concurrent", "autre assureur", "actuellement assuré", "déjà assuré", "chez quelqu'un d'autre"]):
         return (
             f"Bienvenue chez {cfg['entity']} ! "
@@ -217,7 +225,7 @@ def generate_instant_rag_response(user_message: str, cfg: dict, prospect_data: d
             f"[Calculer mon tarif avec Bonus]  [Scanner ma Carte Grise]"
         )
 
-    # 5. Intent: Single Price / Devis / Tarif Request
+    # 6. Intent: Single Price / Devis / Tarif Request
     if any(k in msg for k in ["prix", "tarif", "cout", "coût", "combien", "simulation", "devis", "estimation", "obtenir mon tarif"]):
         if doc_uploaded or (prospect_data and prospect_data.get("vehicle")):
             return (

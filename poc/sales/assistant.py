@@ -1,6 +1,13 @@
 from core import database, nlp
 import re
 
+STOP_WORDS = {
+    "avec", "et", "en", "de", "du", "des", "le", "la", "les", "un", "une",
+    "pour", "sur", "dans", "par", "pas", "oui", "non", "ici", "bien", "toujours",
+    "voiture", "auto", "devis", "tarif", "prix", "bonjour", "salut", "quand", "quel",
+    "quelque", "chose", "merci", "voilà", "voila", "c'est", "fait"
+}
+
 def handle_sales_conversation(prospect_id: str, message_text: str, channel: str = "WhatsApp") -> dict:
     """Process prospect chat message, track acquisition channel, and invoke country-aware LLM."""
     
@@ -33,17 +40,17 @@ def handle_sales_conversation(prospect_id: str, message_text: str, channel: str 
     
     msg_lower = message_text.lower()
     
-    # 1. Improved Name Detection (e.g., "c'est Karim", "je suis Karim", "moi c'est Karim")
+    # 1. Advanced Name Extraction (e.g. "Heithem", "je suis Heithem", "moi c'est Heithem", "c'est Heithem")
     name_found = re_search_name(message_text)
-    if name_found:
+    if name_found and prospect["name"] == "Prospect Inconnu":
         prospect["name"] = name_found
         
     phone_found = re_search_phone(message_text)
     if phone_found:
         prospect["phone"] = phone_found
         
-    # 2. Intelligent Vehicle Field Maintenance (do not dump conversational sentences into vehicle name)
-    if not prospect.get("vehicle") or "informations" in prospect.get("vehicle", "").lower() or "toujours" in prospect.get("vehicle", "").lower():
+    # 2. Intelligent Vehicle Field Maintenance
+    if not prospect.get("vehicle") or any(w in prospect.get("vehicle", "").lower() for w in ["informations", "toujours", "demande"]):
         vehicle_match = re.search(r'\b(toyota\s+\w+|peugeot\s+\w+|clio\s*\d*|bmw\s*\d*|mercedes\s*\w*|dacia\s*\w*|rav4|hyundai\s*\w*|nissan\s*\w*)\b', msg_lower)
         if vehicle_match:
             prospect["vehicle"] = vehicle_match.group(0).title()
@@ -57,12 +64,12 @@ def handle_sales_conversation(prospect_id: str, message_text: str, channel: str 
             break
             
     if not prospect["need"]:
-        if "tous risques" in msg_lower or "neuf" in msg_lower or "neuve" in msg_lower:
+        if "tous risques" in msg_lower or "neuf" in msg_lower or "neuve" in msg_lower or "platinum" in msg_lower:
             prospect["need"] = cfg["products"][-1]["name"]
         elif "tiers" in msg_lower or "occasion" in msg_lower:
             prospect["need"] = cfg["products"][0]["name"]
 
-    # 4. Accurate Commercial Maturity (Intention) Promotion Rules:
+    # 4. Commercial Maturity Rules
     if prospect.get("document_uploaded") or prospect.get("appointment") or any(k in msg_lower for k in ["devis", "tarif", "prix", "combien", "simulation", "souscrire", "trois devis", "3 devis"]):
         prospect["intention"] = "Chaud 🔥"
     elif prospect.get("vehicle") or prospect.get("need"):
@@ -86,20 +93,27 @@ def handle_sales_conversation(prospect_id: str, message_text: str, channel: str 
     }
 
 def re_search_name(text: str) -> str:
-    text_lower = text.lower().strip()
+    text_clean = text.strip()
+    
+    # Check for direct single/double word name input (e.g. "Heithem" or "Heithem Boussoffara")
+    words = [w for w in re.findall(r'\b[A-ZÀ-Ÿa-zà-ÿ]{3,15}\b', text_clean) if w.lower() not in STOP_WORDS]
+    
+    # Explicit pattern matches
     patterns = [
-        r"c'est\s+([a-zà-ÿ]+)",
-        r"je suis\s+([a-zà-ÿ]+)",
-        r"je m'appelle\s+([a-zà-ÿ]+(?:\s+[a-zà-ÿ]+)?)",
-        r"moi c'est\s+([a-zà-ÿ]+(?:\s+[a-zà-ÿ]+)?)",
-        r"mon nom est\s+([a-zà-ÿ]+(?:\s+[a-zà-ÿ]+)?)"
+        r"(?:je suis|moi c'est|je m'appelle|mon prénom est|c'est)\s+([a-zà-ÿ]{3,15}(?:\s+[a-zà-ÿ]{3,15})?)",
+        r"\b(heithem|karim|youssef|jean|awa|moustapha|bakary|omar|ousmane)\b"
     ]
+    
     for pattern in patterns:
-        match = re.search(pattern, text_lower)
+        match = re.search(pattern, text_clean, re.IGNORECASE)
         if match:
             found = match.group(1).title()
-            if found.lower() not in ["un", "une", "le", "la", "des", "du", "de", "bien", "toujours"]:
+            if found.lower() not in STOP_WORDS:
                 return found
+                
+    if len(words) == 1 and words[0].lower() not in STOP_WORDS:
+        return words[0].title()
+        
     return ""
 
 def re_search_phone(text: str) -> str:
