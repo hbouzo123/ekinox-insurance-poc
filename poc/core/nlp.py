@@ -81,10 +81,10 @@ def generate_llm_response(conversation_history: list, user_message: str, country
         f"- Produits chez {cfg['entity']} :\n{products_str}\n"
         f"{prospect_info}\n\n"
         f"RÈGLES DE DIALOGUE CONTINU :\n"
-        f"1. Ne répète JAMAIS de menu générique si le client valide un rendez-vous ou attend d'être contacté. Remercie-le chaleureusement et confirme la prise en charge !\n"
+        f"1. Ne répète JAMAIS de menu générique si le client pose une question spécifique sur son contrat, ses options de paiement ou son déménagement.\n"
         f"2. Tu es DÉJÀ en ligne directe avec le prospect ! Ne lui demande JAMAIS son numéro de téléphone ou d'appeler un numéro externe.\n"
-        f"3. Dès que le prospect demande un devis ou une simulation, donne-lui IMMÉDIATEMENT son tarif dans le chat sans le faire patienter.\n"
-        f"4. Si le client a une voiture ancienne/collection (ex: >25 ans), confirme qu'on peut l'assurer avec expertise d'état et applique la réduction véhicule de collection.\n"
+        f"3. Si le client déménage dans un autre pays (Maroc, Sénégal), confirme la continuité de couverture grâce au réseau Panafricain SanlamAllianz.\n"
+        f"4. Si le client achète une voiture ancienne/collection (ex: >25 ans), confirme qu'on peut l'assurer avec expertise d'état et applique la réduction véhicule de collection.\n"
         f"5. Termine toujours par 2 choix pertinents entre crochets `[Choix 1]` `[Choix 2]`.\n"
     )
     
@@ -140,7 +140,16 @@ def generate_instant_rag_response(user_message: str, cfg: dict, prospect_data: d
     doc_uploaded = prospect_data.get("document_uploaded", False) if prospect_data else False
     vehicle_str = prospect_data.get("vehicle", "votre véhicule") if prospect_data else "votre véhicule"
 
-    # 1. Intent: Appointment Confirmation / Agent Handover Acknowledgment ("contacté", "attendre", "visio", "rappel", "17h", "rendez-vous", "parfait", "d'accord")
+    # 1. Intent: Cross-country relocation & Inter-entity coverage (CI, MA, SN)
+    if any(k in msg for k in ["déménage", "demenage", "maroc", "casablanca", "sénégal", "senegal", "dakar", "transfert", "pays"]):
+        return (
+            f"Bonne nouvelle ! 🌍 En tant que premier groupe d'assurance Panafricain, **{cfg['entity']}** facilite votre mobilité.\n"
+            f"Votre contrat peut être transféré directement vers notre filiale locale (Sanlam Maroc / SanlamAllianz Sénégal) sans pénalité ni perte d'ancienneté !\n\n"
+            f"Souhaitez-vous que notre pôle International prépare le transfert de votre dossier ?\n\n"
+            f"[🌍 Valider le transfert pays]  [📄 Garder mon contrat {cfg['name']}]"
+        )
+
+    # 2. Intent: Appointment Confirmation / Agent Handover Acknowledgment
     if any(k in msg for k in ["contacté", "contactee", "attendre", "visio", "rappeler", "agence", "créneau", "17h", "18h", "d'accord", "entendu", "parfait", "merci"]):
         return (
             f"C'est parfaitement noté ! 🤝\n\n"
@@ -149,7 +158,7 @@ def generate_instant_rag_response(user_message: str, cfg: dict, prospect_data: d
             f"[🗓️ Modifier l'horaire]  [📄 Revoir mon Devis]"
         )
 
-    # 2. Intent: Classic / 25-Year-Old Vehicle Inquiry ("25 ans", "collection", "ancienne", "vieux")
+    # 3. Intent: Classic / 25-Year-Old Vehicle Inquiry ("25 ans", "collection", "ancienne", "vieux")
     if any(k in msg for k in ["25 ans", "collection", "ancienne", "vieux"]):
         return (
             f"Absolument ! Chez **{cfg['entity']}**, nous assurons parfaitement les véhicules de plus de 25 ans en Tous Risques (**{p3['name']}**).\n"
@@ -158,7 +167,7 @@ def generate_instant_rag_response(user_message: str, cfg: dict, prospect_data: d
             f"[📊 Calculer mon tarif]  [📄 Envoyer ma Carte Grise]"
         )
 
-    # 3. Intent: Recommendation for New / Upcoming Vehicle ("nouvelle", "neuve", "sortir la semaine prochaine", "conseille", "recommande", "touriste", "pourquoi")
+    # 4. Intent: Recommendation for New / Upcoming Vehicle ("nouvelle", "neuve", "sortir la semaine prochaine", "conseille", "recommande", "touriste", "pourquoi")
     if any(k in msg for k in ["nouvelle", "neuf", "neuve", "semaine prochaine", "conseille", "recommande", "pourquoi", "touriste"]):
         return (
             f"Félicitations pour votre nouvelle voiture ! 🚘\n\n"
@@ -168,7 +177,7 @@ def generate_instant_rag_response(user_message: str, cfg: dict, prospect_data: d
             f"[📊 Obtenir mon tarif personnalisé]  [Découvrir {p2['name']}]"
         )
 
-    # 4. Intent: Simplification / Reformulation Request ("pas compris", "reformuler", "résumé", "expliquer", "simple")
+    # 5. Intent: Simplification / Reformulation Request ("pas compris", "reformuler", "résumé", "expliquer", "simple")
     if any(k in msg for k in ["pas compris", "reformuler", "résumé", "expliquer simplement", "synthèse", "clair"]):
         return (
             f"En résumé très simple :\n"
@@ -179,7 +188,7 @@ def generate_instant_rag_response(user_message: str, cfg: dict, prospect_data: d
             f"[Choisir {p2['name']}]  [Choisir {p3['name']}]"
         )
 
-    # 5. Intent: Price / Devis / Tarif Calculation / Simulation Request
+    # 6. Intent: Price / Devis / Tarif Calculation / Simulation Request
     if any(k in msg for k in ["prix", "tarif", "cout", "coût", "combien", "simulation", "devis", "estimation", "obtenir mon tarif", "réserve", "calculer"]):
         if doc_uploaded or (prospect_data and prospect_data.get("vehicle")):
             return (
