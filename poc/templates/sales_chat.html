@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Digital Sales - SanlamAllianz WhatsApp Simulator & Voice Agent</title>
+    <title>Digital Sales - SanlamAllianz Full-Duplex Continuous Voice Agent</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -76,7 +76,7 @@
             background: linear-gradient(135deg, #10b981, #059669);
             color: white;
             border: none;
-            padding: 0.45rem 1rem;
+            padding: 0.45rem 1.1rem;
             border-radius: 1.5rem;
             font-weight: 700;
             font-size: 0.85rem;
@@ -289,9 +289,7 @@
 
         #file-input { display: none; }
 
-        /* ---------------------------------------------------- */
-        /* VOICE CALL OVERLAY MODAL (METHOD 1 - HD NEURAL VOICE)*/
-        /* ---------------------------------------------------- */
+        /* FULL-DUPLEX CONTINUOUS VOICE CALL OVERLAY MODAL */
         .voice-call-overlay {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -320,10 +318,20 @@
             animation: pulseRing 1.5s infinite ease-in-out;
         }
 
+        .voice-call-avatar-ring.listening {
+            animation: pulseListen 1.2s infinite ease-in-out;
+        }
+
         @keyframes pulseRing {
-            0% { box-shadow: 0 0 0 0 rgba(0, 163, 224, 0.7); }
+            0% { box-shadow: 0 0 0 0 rgba(0, 163, 224, 0.8); }
             70% { box-shadow: 0 0 0 25px rgba(0, 163, 224, 0); }
             100% { box-shadow: 0 0 0 0 rgba(0, 163, 224, 0); }
+        }
+
+        @keyframes pulseListen {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.8); }
+            70% { box-shadow: 0 0 0 20px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
         }
 
         .voice-call-name { font-size: 1.25rem; font-weight: 700; }
@@ -411,10 +419,10 @@
         </a>
         
         <div class="header-actions">
-            <!-- Voice Call Header Button -->
+            <!-- Continuous Hands-Free Full-Duplex Voice Call Button -->
             <button class="btn-start-call" onclick="startVoiceCall()">
                 <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
-                Appel Vocal IA (0€)
+                Appel Vocal Continu (0€)
             </button>
 
             <!-- UX Variant Toggle -->
@@ -437,12 +445,12 @@
     </header>
 
     <div class="container">
-        <!-- Simulator -->
+        <!-- Simulator Panel -->
         <div class="simulator-panel">
             <div class="phone-wrapper">
                 <div class="phone-notch"></div>
                 
-                <!-- Voice Call Overlay -->
+                <!-- FULL-DUPLEX CONTINUOUS VOICE CALL OVERLAY MODAL -->
                 <div class="voice-call-overlay" id="voice-call-modal">
                     <div class="voice-call-header">
                         <div class="voice-call-avatar-ring" id="call-avatar-ring">
@@ -458,7 +466,7 @@
                     </div>
 
                     <div class="voice-transcript-box" id="call-transcript-box">
-                        Appuyez sur le micro et parlez librement. Votre conseiller virtuel vous répond de vive voix.
+                        Initialisation de l'accès au microphone...
                     </div>
 
                     <!-- Animated Audio Spectrum Visualizer -->
@@ -489,7 +497,7 @@
                             <p id="wa-channel-tag">Canal : WhatsApp Direct</p>
                         </div>
                     </div>
-                    <div class="header-call-icon" onclick="startVoiceCall()" title="Démarrer l'appel vocal">
+                    <div class="header-call-icon" onclick="startVoiceCall()" title="Démarrer l'appel vocal continu">
                         <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
                     </div>
                 </div>
@@ -505,7 +513,7 @@ Que souhaitez-vous faire ?
                         <div class="chips-container" id="initial-chips">
                             <button class="quick-chip" onclick="clickQuickReply('📊 Faire une simulation rapide')">📊 Faire une simulation rapide</button>
                             <button class="quick-chip" onclick="triggerUpload()">📄 Envoyer ma Carte Grise</button>
-                            <button class="quick-chip" onclick="startVoiceCall()">📞 Démarrer l'Appel Vocal Conseiller (0€)</button>
+                            <button class="quick-chip" onclick="startVoiceCall()">📞 Démarrer l'Appel Vocal Continu (0€)</button>
                         </div>
                     </div>
                 </div>
@@ -553,7 +561,7 @@ Que souhaitez-vous faire ?
         const prospectId = "lead-live-" + Math.floor(Math.random() * 10000);
 
         /* ----------------------------------------------------------- */
-        /* HIGH-QUALITY VOICE ENGINE (HD SYNTHESIS + ROBUST RECOGNITION)*/
+        /* 100% HANDS-FREE FULL-DUPLEX CONTINUOUS VOICE CALL ENGINE    */
         /* ----------------------------------------------------------- */
         let recognition = null;
         let isCallActive = false;
@@ -564,11 +572,9 @@ Que souhaitez-vous faire ?
         let synth = window.speechSynthesis;
         let bestFrenchVoice = null;
 
-        // Dynamic Voice Selection (Select Best Neural / Natural Voice)
         function loadHighQualityVoice() {
             if (!synth) return;
             const voices = synth.getVoices();
-            // Prioritize Natural / Neural / Premium French Voices
             bestFrenchVoice = voices.find(v => (v.lang.includes('fr') || v.lang.includes('FR')) && (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Neural') || v.name.includes('Henri') || v.name.includes('Denise')));
             if (!bestFrenchVoice) {
                 bestFrenchVoice = voices.find(v => v.lang.includes('fr') || v.lang.includes('FR'));
@@ -582,38 +588,75 @@ Que souhaitez-vous faire ?
             }
         }
 
-        // Initialize Speech Recognition
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (SpeechRecognition) {
             recognition = new SpeechRecognition();
             recognition.lang = 'fr-FR';
             recognition.continuous = false;
-            recognition.interimResults = false;
+            recognition.interimResults = true; // REALTIME SPEECH CAPTURE FEEDBACK
 
             recognition.onresult = async function(event) {
-                if (isProcessing) return;
-                const text = event.results[0][0].transcript;
-                if (!text || text.trim().length === 0) return;
+                if (isProcessing || !isCallActive) return;
+                
+                let transcript = '';
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    transcript += event.results[i][0].transcript;
+                }
+                
+                if (!transcript || transcript.trim().length === 0) return;
 
-                isProcessing = true;
-                document.getElementById("call-transcript-box").innerHTML = `🗣️ <strong>Vous :</strong> "${text}"`;
-                document.getElementById("call-status-text").innerText = "Réflexion du conseiller IA...";
-                document.getElementById("call-audio-spectrum").classList.remove("active");
+                document.getElementById("call-transcript-box").innerHTML = `🗣️ <strong>Vous :</strong> "${transcript}"`;
 
-                await processVoiceInput(text);
+                // Only trigger backend fetch when result is final
+                if (event.results[0].isFinal) {
+                    isProcessing = true;
+                    document.getElementById("call-status-text").innerText = "Réflexion du conseiller IA...";
+                    document.getElementById("call-avatar-ring").className = "voice-call-avatar-ring";
+                    document.getElementById("call-audio-spectrum").classList.remove("active");
+
+                    await processVoiceInput(transcript);
+                }
             };
 
             recognition.onerror = function(event) {
-                if (isCallActive && !isMuted && !isProcessing && !synth.speaking) {
-                    document.getElementById("call-status-text").innerText = "Le conseiller écoute... 🎙️";
-                    try { recognition.start(); } catch(e){}
+                console.warn("SpeechRecognition error event:", event.error);
+                if (event.error === 'not-allowed') {
+                    document.getElementById("call-status-text").innerText = "Micro bloqué par le navigateur ⚠️";
+                    document.getElementById("call-transcript-box").innerHTML = "<strong>⚠️ Accès au microphone refusé.</strong><br>Veuillez autoriser le microphone dans la barre d'adresse du navigateur (icône 🔒).";
+                    return;
+                }
+                if (isCallActive && !isMuted && !isProcessing && synth && !synth.speaking) {
+                    setTimeout(restartListeningLoop, 300);
+                }
+            };
+
+            recognition.onend = function() {
+                if (isCallActive && !isMuted && !isProcessing && synth && !synth.speaking) {
+                    setTimeout(restartListeningLoop, 300);
                 }
             };
         }
 
-        function startVoiceCall() {
+        function restartListeningLoop() {
+            if (!isCallActive || isMuted || isProcessing || (synth && synth.speaking)) return;
+            document.getElementById("call-status-text").innerText = "Le conseiller écoute... 🎙️";
+            document.getElementById("call-avatar-ring").className = "voice-call-avatar-ring listening";
+            try { recognition.start(); } catch(e){}
+        }
+
+        async function startVoiceCall() {
             if (!SpeechRecognition) {
-                alert("La reconnaissance vocale native n'est pas supportée sur ce navigateur. Utilisez Chrome, Edge ou Safari.");
+                alert("La reconnaissance vocale native n'est pas supportée sur ce navigateur. Utilisez Google Chrome, Microsoft Edge ou Safari.");
+                return;
+            }
+
+            // EXPLICIT NATIVE BROWSER MICROPHONE PERMISSION REQUEST
+            try {
+                if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                    await navigator.mediaDevices.getUserMedia({ audio: true });
+                }
+            } catch(err) {
+                alert("⚠️ Le microphone est bloqué. Veuillez autoriser l'accès au microphone dans la barre d'adresse (icône de cadenas 🔒) puis réessayez.");
                 return;
             }
 
@@ -621,11 +664,10 @@ Que souhaitez-vous faire ?
             isMuted = false;
             isProcessing = false;
             callSeconds = 0;
+
             document.getElementById("voice-call-modal").style.display = "flex";
             document.getElementById("call-status-text").innerText = "Conseiller connecté 🟢";
-            document.getElementById("call-transcript-box").innerText = "Bonjour ! Je suis votre conseiller SanlamAllianz. Je vous écoute !";
-
-            // Call timer
+            
             callTimerInterval = setInterval(() => {
                 callSeconds++;
                 const mins = String(Math.floor(callSeconds / 60)).padStart(2, '0');
@@ -633,8 +675,11 @@ Que souhaitez-vous faire ?
                 document.getElementById("call-timer").innerText = `${mins}:${secs}`;
             }, 1000);
 
-            // Initial spoken greeting
-            speakText("Bonjour ! Je suis votre conseiller SanlamAllianz. Quel est le modèle de votre véhicule ?");
+            // INSTANT AUDIO PRIMING GREETING (Unlocks Audio Autoplay Permission)
+            const initialGreeting = "Bonjour ! Je suis votre conseiller commercial SanlamAllianz. Comment puis-je vous aider aujourd'hui ?";
+            document.getElementById("call-transcript-box").innerHTML = `🤖 <strong>Conseiller :</strong> "${initialGreeting}"`;
+            
+            speakText(initialGreeting);
         }
 
         async function processVoiceInput(userText) {
@@ -648,70 +693,60 @@ Que souhaitez-vous faire ?
 
             try {
                 const response = await fetch("/api/sales/chat", { method: "POST", body: formData });
-                if (!response.ok) throw new Error("Server HTTP Error");
                 const data = await response.json();
 
-                if (data.status === "success") {
+                if (data.status === "success" && data.reply) {
                     let cleanedReply = data.reply.replace(/\[([^\]]+)\]/g, '').trim();
                     parseAndAppendMessage("assistant", data.reply);
-                    updateIntelPanel(data.prospect_state);
+                    
+                    updateIntelPanel(data.state || data.prospect_state);
                     
                     document.getElementById("call-transcript-box").innerHTML = `🤖 <strong>Conseiller :</strong> "${cleanedReply}"`;
                     speakText(cleanedReply);
                 } else {
-                    speakText("Je vous écoute, vous pouvez me donner le modèle de votre véhicule.");
+                    isProcessing = false;
+                    restartListeningLoop();
                 }
             } catch(e) {
                 console.error("Voice chat error:", e);
-                // Robust Fallback response so it never says network error
-                let fallbackMsg = "Bien reçu ! Quelle est la puissance fiscale de votre véhicule ?";
-                document.getElementById("call-transcript-box").innerHTML = `🤖 <strong>Conseiller :</strong> "${fallbackMsg}"`;
-                speakText(fallbackMsg);
-            } finally {
                 isProcessing = false;
+                restartListeningLoop();
             }
         }
 
         function speakText(text) {
-            if (!synth) { isProcessing = false; return; }
+            if (!synth) { isProcessing = false; restartListeningLoop(); return; }
+            
             synth.cancel();
 
             document.getElementById("call-status-text").innerText = "Le conseiller répond... 🔊";
-            document.getElementById("call-avatar-ring").classList.add("speaking");
+            document.getElementById("call-avatar-ring").className = "voice-call-avatar-ring speaking";
             document.getElementById("call-audio-spectrum").classList.add("active");
 
-            // Clean markdown asterisks & emojis for smooth audio reading
             let speechText = text.replace(/[*_#]/g, '').replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '');
 
             const utterance = new SpeechSynthesisUtterance(speechText);
             utterance.lang = 'fr-FR';
             
-            // Set best voice if found
+            loadHighQualityVoice();
             if (bestFrenchVoice) utterance.voice = bestFrenchVoice;
-            
-            // Natural human speech pace & pitch
             utterance.rate = 0.95;
             utterance.pitch = 1.0;
+            utterance.volume = 1.0;
 
             utterance.onend = function() {
-                document.getElementById("call-avatar-ring").classList.remove("speaking");
+                document.getElementById("call-avatar-ring").className = "voice-call-avatar-ring";
                 document.getElementById("call-audio-spectrum").classList.remove("active");
                 isProcessing = false;
-
-                if (isCallActive && !isMuted) {
-                    document.getElementById("call-status-text").innerText = "Le conseiller écoute... 🎙️";
-                    try { recognition.start(); } catch(e){}
-                }
+                restartListeningLoop();
             };
 
-            utterance.onerror = function() {
-                document.getElementById("call-avatar-ring").classList.remove("speaking");
+            utterance.onerror = function(err) {
+                console.error("SpeechSynthesis error:", err);
+                document.getElementById("call-avatar-ring").className = "voice-call-avatar-ring";
                 document.getElementById("call-audio-spectrum").classList.remove("active");
                 isProcessing = false;
-                if (isCallActive && !isMuted) {
-                    document.getElementById("call-status-text").innerText = "Le conseiller écoute... 🎙️";
-                    try { recognition.start(); } catch(e){}
-                }
+                restartListeningLoop();
             };
 
             synth.speak(utterance);
@@ -722,12 +757,14 @@ Que souhaitez-vous faire ?
             const btn = document.getElementById("btn-mute-mic");
             if (isMuted) {
                 btn.classList.add("active");
-                if (recognition) recognition.stop();
+                if (recognition) try { recognition.stop(); } catch(e){}
                 document.getElementById("call-status-text").innerText = "Micro coupé 🔇";
+                document.getElementById("call-avatar-ring").className = "voice-call-avatar-ring";
             } else {
                 btn.classList.remove("active");
                 document.getElementById("call-status-text").innerText = "Le conseiller écoute... 🎙️";
-                if (recognition) try { recognition.start(); } catch(e){}
+                isProcessing = false;
+                restartListeningLoop();
             }
         }
 
@@ -735,11 +772,11 @@ Que souhaitez-vous faire ?
             isCallActive = false;
             isProcessing = false;
             if (synth) synth.cancel();
-            if (recognition) recognition.stop();
+            if (recognition) try { recognition.stop(); } catch(e){}
             clearInterval(callTimerInterval);
 
             document.getElementById("voice-call-modal").style.display = "none";
-            document.getElementById("call-avatar-ring").classList.remove("speaking");
+            document.getElementById("call-avatar-ring").className = "voice-call-avatar-ring";
             document.getElementById("call-audio-spectrum").classList.remove("active");
 
             parseAndAppendMessage("assistant", `📞 **Fin de l'appel vocal** (${document.getElementById("call-timer").innerText}). Résumé sauvegardé dans la fiche prospect.\n\n[📊 Obtenir mon devis par écrit] [🗓️ Confirmer mon RDV]`);
@@ -767,7 +804,7 @@ Que souhaitez-vous faire ?
                         <div class="chips-container">
                             <button class="quick-chip" onclick="clickQuickReply('📊 Faire une simulation rapide')">📊 Faire une simulation rapide</button>
                             <button class="quick-chip" onclick="triggerUpload()">📄 Envoyer ma Carte Grise</button>
-                            <button class="quick-chip" onclick="startVoiceCall()">📞 Démarrer l'Appel Vocal Conseiller (0€)</button>
+                            <button class="quick-chip" onclick="startVoiceCall()">📞 Démarrer l'Appel Vocal Continu (0€)</button>
                         </div>
                     </div>
                 `;
@@ -869,7 +906,7 @@ Comment souhaitez-vous démarrer ?
                 
                 if (data.status === "success") {
                     parseAndAppendMessage("assistant", data.reply);
-                    updateIntelPanel(data.state);
+                    updateIntelPanel(data.state || data.prospect_state);
                 }
             } catch (e) {
                 typingBubble.innerText = "Erreur de connexion.";
@@ -898,6 +935,7 @@ Comment souhaitez-vous démarrer ?
         });
 
         function updateIntelPanel(state) {
+            if (!state) return;
             document.getElementById("intel-name").innerText = state.name || "Prospect Inconnu";
             document.getElementById("intel-intention").innerText = state.intention || "Froid ❄️";
             document.getElementById("intel-vehicle").innerText = state.vehicle || "En qualification...";

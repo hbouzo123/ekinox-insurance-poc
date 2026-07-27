@@ -60,9 +60,9 @@ def handle_sales_conversation(prospect_id: str, message_text: str, channel: str 
             prospect["need"] = cfg["products"][0]["name"]
             prospect["intention"] = "Chaud 🔥"
             
-    # Generate live LLM response with country context
+    # Generate live LLM response with country context and prospect state memory
     history_tuples = prospect["conversation"][:-1]
-    assistant_reply = nlp.generate_llm_response(history_tuples, message_text, country_code=country_code)
+    assistant_reply = nlp.generate_llm_response(history_tuples, message_text, country_code=country_code, prospect_data=prospect)
     
     prospect["conversation"].append({"sender": "assistant", "text": assistant_reply})
     
