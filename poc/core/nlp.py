@@ -9,7 +9,7 @@ KNOWLEDGE_DOCUMENTS_BY_COUNTRY = {
         {
             "id": "doc-ci-1",
             "title": "Code CIMA & Conditions Générales SanlamAllianz Côte d'Ivoire",
-            "content": "Conformément au Code CIMA (Article 13), l'assurance Responsabilité Civile automobile est obligatoire. Formule Auto Platinum : dommages tous accidents jusqu'à 50 000 000 FCFA avec assistance 0 km à Abidjan et intérieur du pays. Franchise fixe de 50 000 FCFA.",
+            "content": "Conformément au Code CIMA (Article 13), l'assurance Responsabilité Civile automobile est obligatoire. Formule Auto Platinum : dommages tous accidents jusqu'à 50 000 000 FCFA avec assistance 0 km à Abidjan et intérieur du pays.",
             "category": "garantie"
         }
     ],
@@ -17,7 +17,7 @@ KNOWLEDGE_DOCUMENTS_BY_COUNTRY = {
         {
             "id": "doc-ma-1",
             "title": "Réglementation ACAPS & Conditions Générales Sanlam Maroc",
-            "content": "Sous le contrôle de l'ACAPS, l'offre Assur'Auto Intégrale Sanlam Maroc couvre les dommages tous risques avec rachat de franchise (0 DH reste à charge en garage agréé Sanlam à Casablanca/Rabat) et garantie Décès Toutes Causes.",
+            "content": "Sous le contrôle de l'ACAPS, l'offre Assur'Auto Intégrale Sanlam Maroc couvre les dommages tous risques avec rachat de franchise et garantie Décès Toutes Causes.",
             "category": "garantie"
         }
     ],
@@ -25,26 +25,32 @@ KNOWLEDGE_DOCUMENTS_BY_COUNTRY = {
         {
             "id": "doc-sn-1",
             "title": "Code CIMA Sénégal & Offre SanlamAllianz Sénégal",
-            "content": "La formule Tous Risques Avantage SanlamAllianz Sénégal inclut la protection complète du véhicule et des personnes transportées, l'Assistance Teranga 24/7 sur Dakar et régions. Franchise fixe de 40 000 FCFA.",
+            "content": "La formule Tous Risques Avantage SanlamAllianz Sénégal inclut la protection complète du véhicule et des personnes transportées, l'Assistance Teranga 24/7 sur Dakar et régions.",
             "category": "garantie"
         }
     ]
 }
 
-def sanitize_response(text: str) -> str:
-    """Ensure response never ends mid-sentence."""
+def clean_natural_text(text: str) -> str:
+    """Clean markdown artifacts (**), extra parentheses, and technical symbols for natural human dialogue."""
     if not text:
-        return text
-    text = text.strip()
-    # Check if text ends cleanly with punctuation or brackets
-    if text[-1] in ".!?]😊🚘🛡️📊🗓️":
-        return text
+        return ""
     
-    # Otherwise find last sentence ending punctuation
-    last_punct = max(text.rfind('.'), text.rfind('!'), text.rfind('?'))
-    if last_punct > 20:
-        return text[:last_punct + 1]
-    return text + "."
+    # Remove markdown bold/italic asterisks & underscores
+    cleaned = re.sub(r'[*_#]', '', text)
+    
+    # Remove duplicate parenthesis text like (Tiers) (Tiers) or (Tous Risques) (Tous Risques)
+    cleaned = re.sub(r'\(([^)]+)\)\s*\(\1\)', r'(\1)', cleaned)
+    
+    # Clean multiple spaces & normalize newlines
+    cleaned = re.sub(r'[ \t]+', ' ', cleaned)
+    cleaned = re.sub(r'\n{3,}', '\n\n', cleaned).strip()
+    
+    # Ensure proper sentence ending
+    if cleaned and cleaned[-1] not in ".!?]😊🚘🛡️📊🗓️":
+        cleaned += "."
+        
+    return cleaned
 
 def search_knowledge_hub(query: str, country_code: str = "CI") -> str:
     """Search country-specific Knowledge Hub documents."""
@@ -65,7 +71,7 @@ def search_knowledge_hub(query: str, country_code: str = "CI") -> str:
             best_doc = doc
             
     if best_doc and max_matches > 0:
-        return f"[Document Contractuel Officiel: {best_doc['title']}]\n{best_doc['content']}"
+        return f"Information officielle : {best_doc['content']}"
     return ""
 
 def generate_llm_response(conversation_history: list, user_message: str, country_code: str = "CI", prospect_data: dict = None) -> str:
@@ -79,29 +85,27 @@ def generate_llm_response(conversation_history: list, user_message: str, country
     
     prospect_info = ""
     if prospect_data:
+        if prospect_data.get("name") and prospect_data.get("name") != "Prospect Inconnu":
+            prospect_info += f"\n- Prénom prospect : {prospect_data.get('name')}"
         if prospect_data.get("document_uploaded"):
-            prospect_info += f"\n- CARTE GRISE SCANNÉE ET VALIDÉE ! Véhicule certifié : {prospect_data.get('vehicle', 'Mercedes Série Spéciale (CI-5099-AB2)')}. Le devis est déjà calculé !"
-        if prospect_data.get("vehicle"):
+            prospect_info += f"\n- Carte grise analysée pour : {prospect_data.get('vehicle', 'Mercedes Série Spéciale')}. Devis calculé !"
+        elif prospect_data.get("vehicle"):
             prospect_info += f"\n- Modèle véhicule : {prospect_data.get('vehicle')}"
-        if prospect_data.get("appointment"):
-            prospect_info += f"\n- Rendez-vous fixé : {prospect_data.get('appointment')}"
 
     system_prompt = (
-        f"TU ES EXCLUSIVEMENT LE CHARGÉ DE CLIENTÈLE SANLAMALLIANZ {country_prep.upper()} {cfg['name'].upper()} ({cfg['entity']}).\n"
-        f"LE PAYS ACTIF SELECTIONNÉ EST LE/LA {cfg['name'].upper()} ({cfg['code']}). NE CONFONDS JAMAIS AVEC UN AUTRE PAYS !\n"
-        f"Toutes tes réponses doivent concerner la filiale {cfg['entity']} au/en {cfg['name']} avec les formules locales ({products_str}) en {cfg['currency']}.\n\n"
-        f"CONTEXTE ASSUREUR LOCAL :\n"
-        f"- Réglementation : {cfg['regulatory_body']}\n"
+        f"Tu es le Chargé de Clientèle Automobile SanlamAllianz {country_prep} {cfg['name']} ({cfg['entity']}).\n"
+        f"Tu dialogues naturellement sur WhatsApp et au téléphone avec votre prospect.\n\n"
+        f"DIRECTIVES RIGOUREUSES DE STYLE PARLÉ ET FLUIDE :\n"
+        f"1. Rédige un français naturel, fluide, chaleureux et direct. N'utilise AUCUN caractère spécial de mise en forme (PAS d'étoiles **, PAS de dièses #, PAS de parenthèses superflues).\n"
+        f"2. Ne répète jamais les mêmes termes à la suite. Écris simplement le nom des formules : Auto Classique, Auto Zen, Auto Platinum.\n"
+        f"3. Présente les devis sous forme de phrases claires et agréables à lire et à entendre à voix haute.\n"
+        f"4. Sois concis et accueillant (50 à 80 mots maximum).\n"
+        f"5. Termine toujours par 2 propositions de choix entre crochets simple `[Choix 1]` `[Choix 2]`.\n\n"
+        f"CONTEXTE OFFRES ET GARANTIES :\n"
         f"- Monnaie : {cfg['currency']}\n"
         f"- Garages agréés : {cfg['default_garage']}\n"
-        f"- Couverture internationale Panafricaine : Activée dans les 27 pays du réseau SanlamAllianz.\n"
-        f"- Produits chez {cfg['entity']} :\n{products_str}\n"
-        f"{prospect_info}\n\n"
-        f"RÈGLES DE DIALOGUE CONTINU :\n"
-        f"1. Reste 100% fidèle au pays actif ({cfg['name']}). Ne dis JAMAIS que tu es spécialisé pour un autre pays.\n"
-        f"2. Ne coupe JAMAIS tes phrases au milieu ! Termine TOUJOURS par un point final.\n"
-        f"3. Si le client pose une question sur la couverture dans les 27 pays du groupe, réponds-lui avec enthousiasme que la Carte Verte / Réseau Panafricain SanlamAllianz couvre ses déplacements dans tous les pays du réseau sans interruption !\n"
-        f"4. Termine toujours par 2 choix pertinents entre crochets `[Choix 1]` `[Choix 2]`.\n"
+        f"- Produits {cfg['entity']} :\n{products_str}\n"
+        f"{prospect_info}\n"
     )
     
     if doc_context:
@@ -111,7 +115,7 @@ def generate_llm_response(conversation_history: list, user_message: str, country
     
     for msg in conversation_history[-6:]:
         role = "assistant" if msg["sender"] == "assistant" else "user"
-        clean_text = re.sub(r'\[([^\]]+)\]', '', msg["text"]).strip()
+        clean_text = clean_natural_text(msg["text"])
         messages.append({"role": role, "content": clean_text})
         
     messages.append({"role": "user", "content": user_message})
@@ -127,7 +131,7 @@ def generate_llm_response(conversation_history: list, user_message: str, country
                     "stream": False,
                     "options": {
                         "num_predict": 400,
-                        "temperature": 0.5
+                        "temperature": 0.4
                     }
                 }
                 data = json.dumps(payload).encode('utf-8')
@@ -139,11 +143,11 @@ def generate_llm_response(conversation_history: list, user_message: str, country
                 result = json.loads(resp.read().decode('utf-8'))
                 reply = result.get("message", {}).get("content", "").strip()
                 if reply and len(reply) > 15:
-                    return sanitize_response(reply)
+                    return clean_natural_text(reply)
             except Exception as e:
                 print(f"[LLM Core] Model {model_name} call exception ({e}). Trying next fallback...")
             
-    return sanitize_response(generate_instant_rag_response(user_message, cfg, prospect_data))
+    return clean_natural_text(generate_instant_rag_response(user_message, cfg, prospect_data))
 
 def generate_instant_rag_response(user_message: str, cfg: dict, prospect_data: dict = None) -> str:
     """Instant 0.01s Knowledge Engine tailored dynamically to the question and country context."""
@@ -155,41 +159,88 @@ def generate_instant_rag_response(user_message: str, cfg: dict, prospect_data: d
     
     doc_uploaded = prospect_data.get("document_uploaded", False) if prospect_data else False
     vehicle_str = prospect_data.get("vehicle", "votre véhicule") if prospect_data else "votre véhicule"
+    name_str = prospect_data.get("name", "") if prospect_data else ""
+    greeting_name = f" M. {name_str}" if name_str and name_str != "Prospect Inconnu" else ""
 
-    # 1. Intent: Panafrican International Coverage across 27 countries ("26", "28", "27", "pays", "étranger", "reseau", "réseau", "couverture")
+    # 1. Intent: Price / Devis / Tarif Calculation Request for all 3 formulas
+    if any(k in msg for k in ["trois devis", "3 devis", "pour chaque formule", "combien ca coute", "combien ça me coûte", "prix pour chaque"]):
+        if country_code == "CI":
+            return (
+                f"Avec plaisir{greeting_name} ! Voici l'estimation détaillée pour votre {vehicle_str} :\n\n"
+                f"1. Auto Classique : 75 000 FCFA par an (Responsabilité Civile obligatoire CIMA et défense recours).\n"
+                f"2. Auto Zen : 135 000 FCFA par an (Tiers amélioré avec protection contre le vol, l'incendie et le bris de glace).\n"
+                f"3. Auto Platinum : 250 000 FCFA par an (Tous Risques intégral avec véhicule de remplacement et assistance 0 km).\n\n"
+                f"Quelle formule correspond le mieux à votre budget ?\n\n"
+                f"[Choisir Auto Zen]  [Choisir Auto Platinum]  [Prendre Rendez-vous]"
+            )
+        elif country_code == "MA":
+            return (
+                f"Avec plaisir{greeting_name} ! Voici le détail des tarifs Sanlam Maroc pour votre {vehicle_str} :\n\n"
+                f"1. Assur Auto Pass : 2 400 DH par an (Responsabilité Civile et assistance de base).\n"
+                f"2. Pack L Hemza : 4 200 DH par an (Tiers Plus avec vol, incendie et bris de glace sans franchise).\n"
+                f"3. Assur Auto Intégrale : 7 800 DH par an (Tous Risques complet avec rachat de franchise).\n\n"
+                f"Quelle formule préférez-vous ?\n\n"
+                f"[Choisir Pack L Hemza]  [Choisir Assur Auto Intégrale]"
+            )
+        else:
+            return (
+                f"Voici vos trois devis personnalisés pour votre {vehicle_str} :\n\n"
+                f"1. Auto Pack Teranga : 110 000 FCFA par an.\n"
+                f"2. Auto Zen Teranga : 195 000 FCFA par an.\n"
+                f"3. Tous Risques Avantage : 350 000 FCFA par an.\n\n"
+                f"Laquelle souhaitez-vous retenir ?\n\n"
+                f"[Choisir Auto Zen Teranga]  [Choisir Tous Risques Avantage]"
+            )
+
+    # 2. Intent: International Coverage across 27 countries
     if any(k in msg for k in ["26", "28", "27", "étranger", "etranger", "couverture", "réseau", "reseau"]):
         return (
-            f"Bonne nouvelle ! 🌍 Votre contrat **{cfg['entity']}** inclut l'extension de garantie Panafricaine.\n"
-            f"Vous êtes parfaitement couvert dans l'ensemble des 27 pays où le groupe SanlamAllianz est présent ! En cas de déplacement, votre assistance et vos garanties restent valables sans interruption.\n\n"
-            f"Souhaitez-vous obtenir votre devis personnalisé ou une attestation internationale ?\n\n"
-            f"[📊 Obtenir mon devis]  [🗓️ Prendre RDV Conseiller]"
+            f"Bonne nouvelle{greeting_name} ! Votre contrat {cfg['entity']} inclut la garantie Panafricaine. "
+            f"Vous êtes parfaitement couvert dans l'ensemble des 27 pays du réseau SanlamAllianz. "
+            f"En cas de déplacement, votre assistance reste active sans interruption.\n\n"
+            f"[Obtenir mon devis]  [Prendre RDV Conseiller]"
         )
 
-    # 2. Intent: Explicit Relocation across countries ("déménage", "demenage", "transfert de contrat", "changement de pays")
+    # 3. Intent: Explicit Relocation across countries
     if any(k in msg for k in ["déménage", "demenage", "transfert de contrat", "changement de pays"]):
         return (
-            f"Bonne nouvelle ! 🌍 En tant que premier groupe d'assurance Panafricain, **{cfg['entity']}** facilite votre mobilité.\n"
-            f"Votre contrat peut être transféré directement vers notre filiale locale sans pénalité ni perte d'ancienneté !\n\n"
-            f"Souhaitez-vous que notre pôle International prépare le transfert de votre dossier ?\n\n"
-            f"[🌍 Valider le transfert pays]  [📄 Garder mon contrat {cfg['name']}]"
+            f"En tant que premier groupe d'assurance Panafricain, {cfg['entity']} facilite votre mobilité. "
+            f"Votre contrat peut être transféré directement vers notre filiale locale sans aucune pénalité.\n\n"
+            f"[Valider le transfert pays]  [Garder mon contrat actuel]"
         )
 
-    # 3. Intent: Competitor Switch / Already Insured elsewhere ("concurrent", "autre assureur", "actuellement assuré", "déjà assuré")
+    # 4. Intent: Competitor Switch
     if any(k in msg for k in ["concurrent", "autre assureur", "actuellement assuré", "déjà assuré", "chez quelqu'un d'autre"]):
         return (
-            f"Bienvenue chez **{cfg['entity']}** {country_prep} {cfg['name']} ! 🛡️\n\n"
-            f"Nous gérons intégralement la résiliation de votre ancien contrat auprès de votre assureur actuel sans frais ni interruption de garantie.\n"
-            f"De plus, nous reprenons 100% de votre Bonus d'ancienneté avec une réduction préférentielle !\n\n"
-            f"Souhaitez-vous découvrir votre tarif avec votre bonus conservé ?\n\n"
-            f"[📊 Calculer mon tarif avec Bonus]  [📄 Scanner ma Carte Grise]"
+            f"Bienvenue chez {cfg['entity']} ! "
+            f"Nous gérons gratuitement la résiliation auprès de votre ancien assureur et nous reprenons 100% de votre bonus d'ancienneté.\n\n"
+            f"[Calculer mon tarif avec Bonus]  [Scanner ma Carte Grise]"
         )
+
+    # 5. Intent: Single Price / Devis / Tarif Request
+    if any(k in msg for k in ["prix", "tarif", "cout", "coût", "combien", "simulation", "devis", "estimation", "obtenir mon tarif"]):
+        if doc_uploaded or (prospect_data and prospect_data.get("vehicle")):
+            return (
+                f"Voici vos tarifs personnalisés pour votre {vehicle_str} :\n\n"
+                f"1. {p1['name']} : {p1['desc']}.\n"
+                f"2. {p2['name']} : {p2['desc']}.\n"
+                f"3. {p3['name']} : {p3['desc']}.\n\n"
+                f"Quelle formule souhaitez-vous retenir pour votre souscription ?\n\n"
+                f"[{p2['name']}]  [{p3['name']}]  [Prendre Rendez-vous]"
+            )
+        else:
+            return (
+                f"Le tarif dépend du modèle et de la puissance fiscale de votre véhicule. "
+                f"Pour obtenir le montant exact immédiatement, vous pouvez scanner votre carte grise directement dans ce chat.\n\n"
+                f"[Scanner ma Carte Grise]  [Prendre RDV Conseiller]"
+            )
 
     # Default Dynamic Orientation Response
     return (
-        f"Chez **{cfg['entity']}** {country_prep} {cfg['name']}, nous proposons 3 niveaux de protection :\n"
-        f"1️⃣ **{p1['name']}**\n"
-        f"2️⃣ **{p2['name']}**\n"
-        f"3️⃣ **{p3['name']}**\n\n"
+        f"Chez {cfg['entity']} {country_prep} {cfg['name']}, nous proposons 3 niveaux de protection :\n"
+        f"1. {p1['name']} : la couverture essentielle.\n"
+        f"2. {p2['name']} : la formule équilibrée avec vol et bris de glace.\n"
+        f"3. {p3['name']} : la protection tous risques intégrale.\n\n"
         f"Quelle formule souhaitez-vous découvrir ?\n\n"
-        f"[{p1['name']}]  [{p3['name']}]  [📊 Obtenir mon tarif personnalisé]"
+        f"[{p2['name']}]  [{p3['name']}]  [Obtenir mon tarif]"
     )

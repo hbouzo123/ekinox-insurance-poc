@@ -595,7 +595,7 @@ Que souhaitez-vous faire ?
         if (SpeechRecognition) {
             recognition = new SpeechRecognition();
             recognition.lang = 'fr-FR';
-            recognition.continuous = true; // CONTINUOUS CAPTURE TO PREVENT MID-SENTENCE USER CUT-OFF
+            recognition.continuous = true;
             recognition.interimResults = true;
 
             recognition.onresult = function(event) {
@@ -611,7 +611,6 @@ Que souhaitez-vous faire ?
                 currentVoiceBuffer = transcript;
                 document.getElementById("call-transcript-box").innerHTML = `🗣️ <strong>Vous :</strong> "${currentVoiceBuffer}"`;
 
-                // Debounce speech silence for 1800ms before sending speech buffer to AI
                 if (silenceDebounceTimer) clearTimeout(silenceDebounceTimer);
                 
                 silenceDebounceTimer = setTimeout(async () => {
@@ -705,7 +704,7 @@ Que souhaitez-vous faire ?
                 const data = await response.json();
 
                 if (data.status === "success" && data.reply) {
-                    let cleanedReply = data.reply.replace(/\[([^\]]+)\]/g, '').trim();
+                    let cleanedReply = data.reply.replace(/\[([^\]]+)\]/g, '').replace(/[*_#]/g, '').trim();
                     parseAndAppendMessage("assistant", data.reply);
                     
                     updateIntelPanel(data.state || data.prospect_state);
@@ -788,7 +787,7 @@ Que souhaitez-vous faire ?
             document.getElementById("call-avatar-ring").className = "voice-call-avatar-ring";
             document.getElementById("call-audio-spectrum").classList.remove("active");
 
-            parseAndAppendMessage("assistant", `📞 **Fin de l'appel vocal** (${document.getElementById("call-timer").innerText}). Résumé sauvegardé dans la fiche prospect.\n\n[📊 Obtenir mon devis par écrit] [🗓️ Confirmer mon RDV]`);
+            parseAndAppendMessage("assistant", `📞 Fin de l'appel vocal (${document.getElementById("call-timer").innerText}). Résumé sauvegardé dans la fiche prospect.\n\n[Obtenir mon devis par écrit] [Confirmer mon RDV]`);
         }
 
         /* ----------------------------------------------------------- */
@@ -823,9 +822,9 @@ Que souhaitez-vous faire ?
 Bonjour ! 👋 Je suis votre Chargé de Clientèle Automobile SanlamAllianz.
 
 Je vous accompagne à chaque étape :
-• 🚗 <strong>Simulation & Formules</strong> sur-mesure pour votre véhicule.
-• 📄 <strong>Lecture automatique</strong> de votre Carte Grise (scan instantané).
-• 🛡️ <strong>Conseils & Garanties</strong> (réseau de garages agréés, rachat de franchise).
+• 🚗 Simulation et Formules sur-mesure pour votre véhicule.
+• 📄 Lecture automatique de votre Carte Grise (scan instantané).
+• 🛡️ Conseils et Garanties (réseau de garages agréés, rachat de franchise).
 
 Comment souhaitez-vous démarrer ?
 
@@ -851,17 +850,16 @@ Comment souhaitez-vous démarrer ?
             bubble.className = `msg-bubble ${sender === 'user' ? 'msg-user' : 'msg-assistant'}`;
             
             const buttonMatches = rawText.match(/\[([^\]]+)\]/g);
-            let cleanedText = rawText.replace(/\[([^\]]+)\]/g, '').trim();
+            let cleanedText = rawText.replace(/\[([^\]]+)\]/g, '').replace(/[*_#]/g, '').trim();
             
-            let htmlContent = cleanedText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-            bubble.innerHTML = htmlContent;
+            bubble.innerText = cleanedText;
 
             if (buttonMatches && buttonMatches.length > 0 && sender === 'assistant') {
                 const chipsDiv = document.createElement("div");
                 chipsDiv.className = "chips-container";
                 
                 buttonMatches.forEach(b => {
-                    const btnLabel = b.replace('[', '').replace(']', '').trim();
+                    const btnLabel = b.replace('[', '').replace(']', '').replace(/[*_#]/g, '').trim();
                     const chipBtn = document.createElement("button");
                     chipBtn.className = "quick-chip";
                     chipBtn.innerText = btnLabel;
@@ -940,7 +938,7 @@ Comment souhaitez-vous démarrer ?
             if (data.status === "success") {
                 const vehicleName = (data.prospect_state && data.prospect_state.vehicle) ? data.prospect_state.vehicle : "votre véhicule";
                 
-                parseAndAppendMessage("assistant", `✅ Carte grise analysée par OCR !\n\n[📊 Obtenir mon tarif personnalisé] [🗓️ Prendre RDV avec un conseiller]`);
+                parseAndAppendMessage("assistant", `Carte grise analysée par OCR !\n\n[Obtenir mon tarif personnalisé] [Prendre RDV avec un conseiller]`);
                 updateIntelPanel(data.prospect_state);
 
                 if (isCallActive) {
