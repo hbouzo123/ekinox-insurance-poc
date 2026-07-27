@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Sales - SanlamAllianz WhatsApp Simulator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0075C9; /* Sanlam Lochmara Blue */
+            --primary-dark: #003781; /* Resolution / Allianz Blue */
+            --primary-glow: rgba(0, 117, 201, 0.35);
+            --secondary: #00A3E0; /* Sanlam Cyan Accent */
+            --bg-dark: #0b132b;
+            --card-bg: rgba(15, 23, 42, 0.7);
+            --text-light: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: rgba(255, 255, 255, 0.1);
+            --wa-bg: #efeae2;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-image: radial-gradient(circle at 10% 20%, rgba(0, 117, 201, 0.15) 0%, transparent 40%);
+        }
+
+        header.site-header {
+            padding: 0.8rem 3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(12px);
+            background: rgba(11, 19, 43, 0.85);
+        }
+
+        .logo-container { display: flex; align-items: center; text-decoration: none; }
+
+        .header-actions { display: flex; align-items: center; gap: 1.2rem; }
+
+        .ux-variant-toggle {
+            display: flex;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            padding: 0.2rem;
+            border-radius: 1.5rem;
+        }
+
+        .ux-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 0.35rem 0.8rem;
+            font-size: 0.78rem;
+            font-weight: 600;
+            border-radius: 1rem;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .ux-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .channel-picker {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            padding: 0.4rem 1rem;
+            border-radius: 2rem;
+        }
+
+        .channel-picker label { font-size: 0.82rem; color: var(--text-muted); font-weight: 600; }
+        .channel-select { background: transparent; border: none; color: var(--secondary); font-weight: 700; outline: none; cursor: pointer; font-family: inherit; font-size:0.85rem; }
+
+        .container {
+            display: flex;
+            flex: 1;
+            padding: 1.5rem 2rem;
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+            gap: 2rem;
+            height: calc(100vh - 75px);
+        }
+
+        .simulator-panel { flex: 1.2; display: flex; justify-content: center; align-items: center; }
+
+        .phone-wrapper {
+            width: 380px;
+            height: 630px;
+            background: #1e1e1e;
+            border: 12px solid #333;
+            border-radius: 2.5rem;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.8);
+            position: relative;
+        }
+
+        .phone-notch {
+            width: 150px;
+            height: 22px;
+            background: #333;
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            border-bottom-left-radius: 1rem;
+            border-bottom-right-radius: 1rem;
+            z-index: 10;
+        }
+
+        .wa-header {
+            background: #003781;
+            padding: 1.8rem 1.2rem 0.8rem 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .wa-avatar { width: 36px; height: 36px; border-radius: 50%; background: #0075C9; display: flex; align-items: center; justify-content: center; font-weight: 800; }
+        .wa-info h3 { font-size: 0.95rem; font-weight: 600; }
+        .wa-info p { font-size: 0.75rem; color: #00A3E0; }
+
+        .wa-chat-area {
+            flex: 1;
+            background: var(--wa-bg);
+            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
+            padding: 1rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+
+        .msg-bubble {
+            max-width: 88%;
+            padding: 0.7rem 0.9rem;
+            border-radius: 0.8rem;
+            font-size: 0.88rem;
+            line-height: 1.45;
+            color: #111;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.12);
+            white-space: pre-wrap;
+        }
+
+        .msg-user { background: #e0f2fe; border-left: 3px solid #0075C9; align-self: flex-end; }
+        .msg-assistant { background: #ffffff; align-self: flex-start; }
+
+        .chips-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            margin-top: 0.6rem;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 0.5rem;
+        }
+
+        .quick-chip {
+            background: #f0f9ff;
+            border: 1px solid #0075C9;
+            color: #003781;
+            padding: 0.5rem 0.8rem;
+            border-radius: 1rem;
+            font-size: 0.83rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        .quick-chip:hover {
+            background: #e0f2fe;
+            transform: translateY(-1px);
+        }
+
+        .wa-input-bar {
+            background: #f0f2f5;
+            padding: 0.6rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            border-top: 1px solid #e3e7eb;
+        }
+
+        .wa-input {
+            flex: 1;
+            padding: 0.55rem 0.9rem;
+            border-radius: 1.5rem;
+            border: 1px solid #ffffff;
+            outline: none;
+            font-size: 0.88rem;
+            background: white;
+            color: #333;
+        }
+
+        .wa-btn {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: #0075C9;
+            border: none;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .upload-btn { background: #003781; }
+
+        .intel-panel {
+            flex: 1.8;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 1.5rem;
+            backdrop-filter: blur(10px);
+            padding: 1.8rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+            overflow-y: auto;
+        }
+
+        .meta-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+        .meta-card { background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border); padding: 1rem; border-radius: 0.8rem; display: flex; flex-direction: column; gap: 0.3rem; }
+        .meta-card label { font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+        .meta-card span { font-size: 1rem; font-weight: 600; color: var(--text-light); }
+
+        .intel-block { display: flex; flex-direction: column; gap: 0.5rem; }
+        .intel-block label { font-size: 0.85rem; font-weight: 600; color: var(--secondary); text-transform: uppercase; }
+        .intel-content { background: rgba(255, 255, 255, 0.01); border: 1px solid var(--border); padding: 1rem; border-radius: 0.8rem; line-height: 1.5; font-size: 0.95rem; }
+
+        .action-highlight { background: rgba(0, 117, 201, 0.12); border-color: rgba(0, 117, 201, 0.3); color: #93c5fd; font-weight: 600; }
+
+        #file-input { display: none; }
+    </style>
+</head>
+<body>
+
+    <header class="site-header">
+        <a href="/" class="logo-container">
+            <svg width="200" height="45" viewBox="0 0 220 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="25" cy="25" r="22" fill="#0075C9"/>
+                <path d="M25 9C16.1634 9 9 16.1634 9 25C9 33.8366 16.1634 41 25 41C33.8366 41 41 33.8366 41 25C41 16.1634 33.8366 9 25 9ZM25 38C17.8203 38 12 32.1797 12 25C12 17.8203 17.8203 12 25 12C32.1797 12 38 17.8203 38 25C38 32.1797 32.1797 38 25 38Z" fill="#FFFFFF"/>
+                <path d="M25 15C19.4772 15 15 19.4772 15 25C15 27.5 16 29.8 17.6 31.5L25 24L32.4 31.5C34 29.8 35 27.5 35 25C35 19.4772 30.5228 15 25 15Z" fill="#FFFFFF"/>
+                <circle cx="25" cy="21" r="3.5" fill="#00A3E0"/>
+                <text x="54" y="32" font-family="'Outfit', sans-serif" font-size="23" font-weight="800" fill="#FFFFFF" letter-spacing="-0.5">
+                    Sanlam<tspan fill="#00A3E0" font-weight="400">Allianz</tspan>
+                </text>
+            </svg>
+        </a>
+        
+        <div class="header-actions">
+            <div class="ux-variant-toggle">
+                <button class="ux-btn active" id="btn-opt-a" onclick="setUXVariant('A')">Option A (WhatsApp Flash)</button>
+                <button class="ux-btn" id="btn-opt-b" onclick="setUXVariant('B')">Option B (Orienter & Qualifier)</button>
+            </div>
+
+            <div class="channel-picker">
+                <label>Canal :</label>
+                <select class="channel-select" id="channel-select" onchange="updateChannelHeader()">
+                    <option value="WhatsApp">WhatsApp Direct</option>
+                    <option value="Meta Ads">Meta / Instagram Ads</option>
+                    <option value="Google Ads">Google Search (Click-to-Chat)</option>
+                    <option value="Web Widget">Widget Web Assureur</option>
+                    <option value="SMS">Campagne SMS</option>
+                </select>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Simulator -->
+        <div class="simulator-panel">
+            <div class="phone-wrapper">
+                <div class="phone-notch"></div>
+                <div class="wa-header">
+                    <div class="wa-avatar">S</div>
+                    <div class="wa-info">
+                        <h3>SanlamAllianz Assistant</h3>
+                        <p id="wa-channel-tag">Canal : WhatsApp Direct</p>
+                    </div>
+                </div>
+                
+                <div class="wa-chat-area" id="chat-area">
+                    <div class="msg-bubble msg-assistant" id="initial-welcome-msg">
+Bonjour ! 👋 Je suis votre assistant Assurance Auto SanlamAllianz.
+
+Je peux calculer votre tarif en 2 minutes ou analyser votre carte grise directement par photo.
+
+Que souhaitez-vous faire ?
+
+                        <div class="chips-container" id="initial-chips">
+                            <button class="quick-chip" onclick="clickQuickReply('📊 Faire une simulation rapide')">📊 Faire une simulation rapide</button>
+                            <button class="quick-chip" onclick="triggerUpload()">📄 Envoyer ma Carte Grise</button>
+                            <button class="quick-chip" onclick="clickQuickReply('🗓️ Prendre RDV / Être rappelé')">🗓️ Prendre RDV / Être rappelé</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="wa-input-bar">
+                    <input type="file" id="file-input" accept="application/pdf,image/*">
+                    <button class="wa-btn upload-btn" onclick="triggerUpload()" title="Uploader Carte Grise">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                    </button>
+                    <input type="text" class="wa-input" id="message-input" placeholder="Écrire un message..." onkeypress="handleKeyPress(event)">
+                    <button class="wa-btn" onclick="sendMessage()">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Monitoring Panel -->
+        <div class="intel-panel">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:0.8rem;">
+                <h2>Intelligence Commerciale & Handover</h2>
+                <span class="badge-status" id="intel-channel-badge" style="background:rgba(0,117,201,0.2); color:#93c5fd; padding:0.3rem 0.8rem; border-radius:1rem; font-weight:600; font-size:0.8rem;">WhatsApp</span>
+            </div>
+            
+            <div class="meta-grid">
+                <div class="meta-card"><label>Nom Prospect</label><span id="intel-name">Prospect Inconnu</span></div>
+                <div class="meta-card"><label>Maturité</label><span id="intel-intention">Froid ❄️</span></div>
+                <div class="meta-card"><label>Véhicule</label><span id="intel-vehicle">—</span></div>
+                <div class="meta-card"><label>Product Advisor</label><span id="intel-need" style="color: var(--secondary);">—</span></div>
+            </div>
+
+            <div class="intel-block">
+                <label>Synthèse & RAG Knowledge Hub</label>
+                <div class="intel-content" id="intel-summary">Attente qualification...</div>
+            </div>
+
+            <div class="intel-block">
+                <label>Next Best Action</label>
+                <div class="intel-content action-highlight" id="intel-next-action">Poursuivre la qualification conversationnelle.</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const prospectId = "lead-live-" + Math.floor(Math.random() * 10000);
+
+        function setUXVariant(variant) {
+            document.getElementById("btn-opt-a").className = `ux-btn ${variant === 'A' ? 'active' : ''}`;
+            document.getElementById("btn-opt-b").className = `ux-btn ${variant === 'B' ? 'active' : ''}`;
+            
+            const chatArea = document.getElementById("chat-area");
+            chatArea.innerHTML = "";
+            
+            if (variant === 'A') {
+                chatArea.innerHTML = `
+                    <div class="msg-bubble msg-assistant">
+Bonjour ! 👋 Je suis votre assistant Assurance Auto SanlamAllianz.
+
+Je peux calculer votre tarif en 2 minutes ou analyser votre carte grise directement par photo.
+
+Que souhaitez-vous faire ?
+
+                        <div class="chips-container">
+                            <button class="quick-chip" onclick="clickQuickReply('📊 Faire une simulation rapide')">📊 Faire une simulation rapide</button>
+                            <button class="quick-chip" onclick="triggerUpload()">📄 Envoyer ma Carte Grise</button>
+                            <button class="quick-chip" onclick="clickQuickReply('🗓️ Prendre RDV / Être rappelé')">🗓️ Prendre RDV / Être rappelé</button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                chatArea.innerHTML = `
+                    <div class="msg-bubble msg-assistant">
+Bonjour ! 👋 Je suis votre Chargé de Clientèle Automobile SanlamAllianz.
+
+Je vous accompagne à chaque étape :
+• 🚗 <strong>Simulation & Formules</strong> sur-mesure pour votre véhicule.
+• 📄 <strong>Lecture automatique</strong> de votre Carte Grise (scan instantané).
+• 🛡️ <strong>Conseils & Garanties</strong> (réseau de garages agréés, rachat de franchise).
+
+Comment souhaitez-vous démarrer ?
+
+                        <div class="chips-container">
+                            <button class="quick-chip" onclick="clickQuickReply('🚗 Obtenir un tarif immédiat')">🚗 Obtenir un tarif immédiat</button>
+                            <button class="quick-chip" onclick="triggerUpload()">📄 Scanner ma Carte Grise</button>
+                            <button class="quick-chip" onclick="clickQuickReply('💬 Parler à un conseiller')">💬 Parler à un conseiller</button>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function updateChannelHeader() {
+            const ch = document.getElementById("channel-select").value;
+            document.getElementById("wa-channel-tag").innerText = "Canal : " + ch;
+            document.getElementById("intel-channel-badge").innerText = ch;
+        }
+
+        function parseAndAppendMessage(sender, rawText) {
+            const chatArea = document.getElementById("chat-area");
+            const bubble = document.createElement("div");
+            bubble.className = `msg-bubble ${sender === 'user' ? 'msg-user' : 'msg-assistant'}`;
+            
+            const buttonMatches = rawText.match(/\[([^\]]+)\]/g);
+            let cleanedText = rawText.replace(/\[([^\]]+)\]/g, '').trim();
+            
+            let htmlContent = cleanedText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            bubble.innerHTML = htmlContent;
+
+            if (buttonMatches && buttonMatches.length > 0 && sender === 'assistant') {
+                const chipsDiv = document.createElement("div");
+                chipsDiv.className = "chips-container";
+                
+                buttonMatches.forEach(b => {
+                    const btnLabel = b.replace('[', '').replace(']', '').trim();
+                    const chipBtn = document.createElement("button");
+                    chipBtn.className = "quick-chip";
+                    chipBtn.innerText = btnLabel;
+                    chipBtn.onclick = () => {
+                        if (btnLabel.toLowerCase().includes("carte grise") || btnLabel.toLowerCase().includes("scanner")) {
+                            triggerUpload();
+                        } else {
+                            clickQuickReply(btnLabel);
+                        }
+                    };
+                    chipsDiv.appendChild(chipBtn);
+                });
+                bubble.appendChild(chipsDiv);
+            }
+
+            chatArea.appendChild(bubble);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        function clickQuickReply(text) {
+            document.getElementById("message-input").value = text;
+            sendMessage();
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById("message-input");
+            const text = input.value.trim();
+            if (!text) return;
+            
+            parseAndAppendMessage("user", text);
+            input.value = "";
+            
+            const channel = document.getElementById("channel-select").value;
+            
+            const typingBubble = document.createElement("div");
+            typingBubble.className = "msg-bubble msg-assistant";
+            typingBubble.innerText = "Rédaction en cours...";
+            document.getElementById("chat-area").appendChild(typingBubble);
+            
+            const formData = new FormData();
+            formData.append("prospect_id", prospectId);
+            formData.append("message", text);
+            formData.append("channel", channel);
+            
+            try {
+                const response = await fetch("/api/sales/chat", { method: "POST", body: formData });
+                const data = await response.json();
+                typingBubble.remove();
+                
+                if (data.status === "success") {
+                    parseAndAppendMessage("assistant", data.reply);
+                    updateIntelPanel(data.state);
+                }
+            } catch (e) {
+                typingBubble.innerText = "Erreur de connexion.";
+            }
+        }
+
+        function triggerUpload() { document.getElementById("file-input").click(); }
+
+        document.getElementById("file-input").addEventListener("change", async function() {
+            const file = this.files[0];
+            if (!file) return;
+            
+            parseAndAppendMessage("user", `[Fichier joint : ${file.name}]`);
+            
+            const formData = new FormData();
+            formData.append("prospect_id", prospectId);
+            formData.append("file", file);
+            
+            const response = await fetch("/api/sales/upload", { method: "POST", body: formData });
+            const data = await response.json();
+            
+            if (data.status === "success") {
+                parseAndAppendMessage("assistant", `✅ Carte grise analysée par OCR !\n\n[📊 Obtenir mon tarif personnalisé] [🗓️ Prendre RDV avec un conseiller]`);
+                updateIntelPanel(data.prospect_state);
+            }
+        });
+
+        function updateIntelPanel(state) {
+            document.getElementById("intel-name").innerText = state.name || "Prospect Inconnu";
+            document.getElementById("intel-intention").innerText = state.intention || "Froid ❄️";
+            document.getElementById("intel-vehicle").innerText = state.vehicle || "En qualification...";
+            document.getElementById("intel-need").innerText = state.need || "Conseil en cours...";
+            document.getElementById("intel-summary").innerText = state.summary || "";
+            document.getElementById("intel-next-action").innerText = state.next_action || "";
+        }
+
+        function handleKeyPress(e) { if (e.key === "Enter") sendMessage(); }
+    </script>
+</body>
+</html>

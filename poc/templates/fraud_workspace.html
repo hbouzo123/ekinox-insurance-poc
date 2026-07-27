@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fraud Investigation Workspace - SanlamAllianz</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <style>
+        :root {
+            --primary: #0075C9; /* Sanlam Lochmara Blue */
+            --primary-dark: #003781; /* Resolution / Allianz Blue */
+            --secondary: #00A3E0; /* Sanlam Cyan Accent */
+            --bg-dark: #0b132b;
+            --card-bg: rgba(15, 23, 42, 0.7);
+            --text-light: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: rgba(255, 255, 255, 0.1);
+            --danger: #ef4444;
+            --success: #10b981;
+            --warning: #f59e0b;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header.site-header {
+            padding: 0.8rem 3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(12px);
+            background: rgba(11, 19, 43, 0.85);
+        }
+
+        .logo-container { display: flex; align-items: center; text-decoration: none; }
+
+        .btn-kb {
+            background: rgba(0, 163, 224, 0.15);
+            border: 1px solid rgba(0, 163, 224, 0.4);
+            color: #99f6e4;
+            padding: 0.5rem 1rem;
+            border-radius: 0.6rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .layout { display: flex; flex: 1; height: calc(100vh - 75px); overflow: hidden; }
+
+        .sidebar { width: 320px; border-right: 1px solid var(--border); display: flex; flex-direction: column; background: rgba(15, 23, 42, 0.4); }
+        .sidebar-header { padding: 1.2rem; border-bottom: 1px solid var(--border); font-weight: 600; text-transform: uppercase; color: var(--text-muted); font-size: 0.85rem; }
+        .claims-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+
+        .claim-item { padding: 1.2rem; border-bottom: 1px solid var(--border); cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        .claim-item.active { background: rgba(0, 117, 201, 0.12); border-left: 4px solid var(--primary); }
+
+        .score-badge { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; }
+        .score-high { background: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); }
+        .score-medium { background: rgba(245, 158, 11, 0.15); color: #fde047; border: 1px solid rgba(245, 158, 11, 0.3); }
+        .score-low { background: rgba(16, 185, 129, 0.15); color: #a7f3d0; border: 1px solid rgba(16, 185, 129, 0.3); }
+
+        .workspace { flex: 1.5; padding: 1.8rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1.2rem; border-right: 1px solid var(--border); }
+        
+        .case-header { display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 0.8rem; }
+        .case-details-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+        
+        .detail-card { background: rgba(255,255,255,0.01); border: 1px solid var(--border); padding: 1rem; border-radius: 0.8rem; }
+        .detail-card label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; }
+
+        .explain-box { background: rgba(0, 117, 201, 0.1); border-left: 4px solid var(--primary); padding: 1rem; border-radius: 0.8rem; color: #93c5fd; font-size: 0.95rem; }
+
+        .flag-tag { display: inline-block; padding: 0.25rem 0.6rem; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: #fca5a5; font-size: 0.8rem; border-radius: 0.5rem; margin-right: 0.4rem; margin-bottom: 0.4rem; font-weight: 600; }
+
+        .btn-action-group { display: flex; gap: 1rem; margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 1.2rem; }
+        .btn { flex: 1; padding: 0.7rem 1.2rem; border-radius: 0.6rem; font-weight: 600; cursor: pointer; border: none; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-warning { background: var(--warning); color: white; }
+
+        .network-panel { flex: 1.3; display: flex; flex-direction: column; background: rgba(15, 23, 42, 0.2); }
+        .network-header { padding: 1.2rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; }
+        .network-container { flex: 1; background: #060a17; }
+        #network-canvas { width: 100%; height: 100%; }
+
+        /* KB Modal */
+        .modal-kb { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 100; justify-content: center; align-items: center; }
+        .modal-content { background: #0f172a; border: 1px solid var(--border); border-radius: 1.5rem; max-width: 800px; width: 90%; padding: 2rem; max-height: 80vh; overflow-y: auto; }
+        .kb-card { background: rgba(255,255,255,0.02); border: 1px solid var(--border); padding: 1.2rem; border-radius: 0.8rem; margin-bottom: 1rem; }
+    </style>
+</head>
+<body>
+
+    <header class="site-header">
+        <a href="/" class="logo-container">
+            <svg width="200" height="45" viewBox="0 0 220 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="25" cy="25" r="22" fill="#0075C9"/>
+                <path d="M25 9C16.1634 9 9 16.1634 9 25C9 33.8366 16.1634 41 25 41C33.8366 41 41 33.8366 41 25C41 16.1634 33.8366 9 25 9ZM25 38C17.8203 38 12 32.1797 12 25C12 17.8203 17.8203 12 25 12C32.1797 12 38 17.8203 38 25C38 32.1797 32.1797 38 25 38Z" fill="#FFFFFF"/>
+                <path d="M25 15C19.4772 15 15 19.4772 15 25C15 27.5 16 29.8 17.6 31.5L25 24L32.4 31.5C34 29.8 35 27.5 35 25C35 19.4772 30.5228 15 25 15Z" fill="#FFFFFF"/>
+                <circle cx="25" cy="21" r="3.5" fill="#00A3E0"/>
+                <text x="54" y="32" font-family="'Outfit', sans-serif" font-size="23" font-weight="800" fill="#FFFFFF" letter-spacing="-0.5">
+                    Sanlam<tspan fill="#00A3E0" font-weight="400">Allianz</tspan>
+                </text>
+            </svg>
+        </a>
+        
+        <button class="btn-kb" onclick="openKBModal()">Fraud Knowledge Base (Jurisprudence)</button>
+    </header>
+
+    <div class="layout">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">File des Sinistres Déclarés</div>
+            <div class="claims-list" id="claims-list-container"></div>
+        </div>
+
+        <!-- Workspace -->
+        <div class="workspace">
+            <div class="case-header">
+                <div>
+                    <h2 id="case-vehicle">Chargement...</h2>
+                    <p id="case-prospect" style="font-size:0.88rem; color:var(--text-muted);"></p>
+                </div>
+                <span id="case-status" style="padding:0.4rem 1rem; border-radius:2rem; font-weight:600; background:rgba(239,68,68,0.15); color:#fca5a5;">Statut</span>
+            </div>
+
+            <div class="case-details-grid">
+                <div class="detail-card"><label>Assuré</label><br><span id="case-insured">-</span></div>
+                <div class="detail-card"><label>Date Sinistre</label><br><span id="case-date">-</span></div>
+                <div class="detail-card"><label>Enjeu Financier</label><br><span id="case-cost" style="color:var(--danger);">-</span></div>
+            </div>
+
+            <div>
+                <h4 style="color:var(--secondary); text-transform:uppercase; font-size:0.85rem; margin-bottom:0.4rem;">Critères de Suspicion Détectés</h4>
+                <div id="case-flags-container"></div>
+            </div>
+
+            <div>
+                <h4 style="color:var(--primary); text-transform:uppercase; font-size:0.85rem; margin-bottom:0.4rem;">Explainable AI (XAI LLM Explanation)</h4>
+                <div class="explain-box" id="case-explanation"></div>
+            </div>
+
+            <div>
+                <h4 style="color:var(--text-muted); text-transform:uppercase; font-size:0.85rem; margin-bottom:0.4rem;">Rapport d'Expertise Ingesté</h4>
+                <div style="background:rgba(255,255,255,0.01); border:1px solid var(--border); padding:1rem; border-radius:0.8rem; line-height:1.4; font-size:0.9rem;" id="case-expert-report"></div>
+            </div>
+
+            <!-- Decisions -->
+            <div class="btn-action-group">
+                <button class="btn btn-success" onclick="updateClaimStatus('Fast-Track')">Approuver (Fast-Track)</button>
+                <button class="btn btn-warning" onclick="updateClaimStatus('Résolu')">Confirmer Fraude (Capitaliser KB)</button>
+                <button class="btn btn-danger" onclick="updateClaimStatus('Rejeté')">Rejeter Sinistre</button>
+            </div>
+        </div>
+
+        <!-- Network Explorer -->
+        <div class="network-panel">
+            <div class="network-header">
+                <h3>Fraud Network Explorer</h3>
+            </div>
+            <div class="network-container">
+                <div id="network-canvas"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- KB Modal -->
+    <div class="modal-kb" id="modal-kb">
+        <div class="modal-content">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                <h2>Fraud Knowledge Base & Capitalisation Métier</h2>
+                <button onclick="closeKBModal()" style="background:none; border:none; color:white; font-size:1.5rem; cursor:pointer;">&times;</button>
+            </div>
+            <div id="kb-list-container"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentClaimId = "claim-101";
+        let claimsData = {};
+        let networkInstance = null;
+
+        async function loadClaims() {
+            const response = await fetch("/api/fraud/claims");
+            const claims = await response.json();
+            const list = document.getElementById("claims-list-container");
+            list.innerHTML = "";
+            
+            claims.forEach(c => {
+                claimsData[c.id] = c;
+                const item = document.createElement("div");
+                item.className = `claim-item ${c.id === currentClaimId ? 'active' : ''}`;
+                item.onclick = () => { currentClaimId = c.id; loadClaims(); };
+                
+                let scoreClass = c.score >= 75 ? "score-high" : (c.score >= 40 ? "score-medium" : "score-low");
+                item.innerHTML = `<div><h4>${c.vehicle}</h4><p style="font-size:0.8rem; color:var(--text-muted);">${c.insured_name}</p></div><div class="score-badge ${scoreClass}">${c.score}</div>`;
+                list.appendChild(item);
+            });
+            renderActiveClaim();
+        }
+
+        function renderActiveClaim() {
+            const c = claimsData[currentClaimId];
+            if (!c) return;
+            document.getElementById("case-vehicle").innerText = c.vehicle;
+            document.getElementById("case-prospect").innerText = `Dossier #${c.id} - ${c.status}`;
+            document.getElementById("case-insured").innerText = c.insured_name;
+            document.getElementById("case-date").innerText = c.date;
+            document.getElementById("case-cost").innerText = c.cost.toLocaleString('fr-FR') + " €";
+            document.getElementById("case-explanation").innerText = c.explanation;
+            document.getElementById("case-expert-report").innerText = c.expert_report;
+            
+            const flagsContainer = document.getElementById("case-flags-container");
+            flagsContainer.innerHTML = "";
+            (c.flags || []).forEach(f => {
+                const tag = document.createElement("span");
+                tag.className = "flag-tag";
+                tag.innerText = f;
+                flagsContainer.appendChild(tag);
+            });
+            renderNetworkGraph();
+        }
+
+        async function updateClaimStatus(status) {
+            const formData = new FormData();
+            formData.append("status", status);
+            await fetch(`/api/fraud/claims/${currentClaimId}/status`, { method: "POST", body: formData });
+            alert(`Statut du dossier mis à jour : ${status}`);
+            loadClaims();
+        }
+
+        async function openKBModal() {
+            document.getElementById("modal-kb").style.display = "flex";
+            const response = await fetch("/api/fraud/knowledge");
+            const kbData = await response.json();
+            const container = document.getElementById("kb-list-container");
+            container.innerHTML = "";
+            
+            kbData.forEach(item => {
+                const div = document.createElement("div");
+                div.className = "kb-card";
+                div.innerHTML = `
+                    <h3 style="color:var(--secondary); margin-bottom:0.4rem;">${item.typology}</h3>
+                    <p style="font-size:0.9rem; line-height:1.4; margin-bottom:0.5rem;"><strong>Modus Operandi :</strong> ${item.modus_operandi}</p>
+                    <p style="font-size:0.85rem; color:#93c5fd;"><strong>Jurisprudence :</strong> ${item.jurisprudence}</p>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function closeKBModal() { document.getElementById("modal-kb").style.display = "none"; }
+
+        async function renderNetworkGraph() {
+            const response = await fetch("/api/fraud/network");
+            const graphData = await response.json();
+            const container = document.getElementById("network-canvas");
+            
+            const data = {
+                nodes: new vis.DataSet(graphData.nodes.map(n => ({
+                    id: n.id, label: n.label, shape: "box",
+                    color: { background: n.id === currentClaimId ? "#0075C9" : "#0b132b", border: "#00A3E0" },
+                    font: { color: "white" }
+                }))),
+                edges: new vis.DataSet(graphData.edges.map(e => ({ from: e.from, to: e.to, label: e.label, color: "#334155" })))
+            };
+            if (networkInstance) networkInstance.destroy();
+            networkInstance = new vis.Network(container, data, {});
+        }
+
+        loadClaims();
+    </script>
+</body>
+</html>

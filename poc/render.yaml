@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: ekinox-insurance-platform
+    env: python
+    rootDir: poc
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: OLLAMA_API_KEY
+        value: a45e8655957b4c69bc4fa758b8633a52.JfC42-bHH4zqIdhtPwdk6puU
+      - key: DEFAULT_MODEL
+        value: deepseek-v4-flash

@@ -1,0 +1,396 @@
+{
+  "review_history": [
+    {
+      "iteration": 1,
+      "focus": "Élimination du jargon technique initial",
+      "critique": "Les descriptions des capacités mentionnaient des outils spécifiques comme LLM, RAG ou Vector DB dans la section client.",
+      "action": "Remplacement par des termes de valeur métier : Assistant IA, Base de connaissances unifiée."
+    },
+    {
+      "iteration": 2,
+      "focus": "Réduction des dépendances IT MVP (Digital Sales)",
+      "critique": "Le MVP supposait une intégration en temps réel avec le core system pour la tarification.",
+      "action": "Découplage de la tarification en MVP : utilisation de grilles tarifaires statiques ou de recommandations de produits pré-calculées."
+    },
+    {
+      "iteration": 3,
+      "focus": "Clarification des principes de conception",
+      "critique": "Les principes manquaient d'alignement avec la vision stratégique de SanlamAllianz.",
+      "action": "Intégration des 6 principes clés (Business First, API-Ready, MVP by Design, AI as an Enabler, Explainability by Default, Scalable Platform) dans le Product Blueprint."
+    },
+    {
+      "iteration": 4,
+      "focus": "Structuration de l'Explainability (Fraud Intelligence)",
+      "critique": "La détection de fraude semblait être une boîte noire pour les gestionnaires de sinistres.",
+      "action": "Ajout d'une capacité explicite Explainable AI avec des scores de confiance et la mise en évidence des facteurs de risque."
+    },
+    {
+      "iteration": 5,
+      "focus": "Affinage du Business Case (Digital Sales)",
+      "critique": "Les hypothèses de ROI étaient trop génériques.",
+      "action": "Intégration des métriques spécifiques : baisse du CAC (50€ à 35€), hausse conversion (4% à 5.5%), point mort à 6.5 mois."
+    },
+    {
+      "iteration": 6,
+      "focus": "Affinage du Business Case (Fraud Intelligence)",
+      "critique": "Les économies OPEX n'étaient pas valorisées.",
+      "action": "Ajout de la valeur du Fast-Track (25% des dossiers, 500k€ d'économies OPEX) en plus des 1.5M€ de charge sinistre évitée."
+    },
+    {
+      "iteration": 7,
+      "focus": "Séparation stricte des audiences",
+      "critique": "La section interne contenait des promesses commerciales, et la section client contenait de la donnée technique.",
+      "action": "Refonte de client_section (orienté bénéfice) et internal_team_section (orienté faisabilité, données, API)."
+    },
+    {
+      "iteration": 8,
+      "focus": "Cohérence de la Roadmap Digital Sales",
+      "critique": "Les étapes de la roadmap étaient trop condensées.",
+      "action": "Déploiement en 7 jalons clairs allant du Sales Assistant (V1) au Customer Service (V7)."
+    },
+    {
+      "iteration": 9,
+      "focus": "Cohérence de la Roadmap Fraud Intelligence",
+      "critique": "L'exploration réseau était positionnée trop tôt dans le déploiement.",
+      "action": "Repositionnement en Phase 3, après la fiabilisation du tri et du workspace."
+    },
+    {
+      "iteration": 10,
+      "focus": "Validation finale de la proposition unifiée",
+      "critique": "Le ton général manquait d'impact pour un niveau direction générale.",
+      "action": "Revue stylistique complète pour garantir un français professionnel de haut niveau, assertif et orienté résultats."
+    }
+  ],
+  "accelerators": {
+    "digital_sales": {
+      "title": "Digital Sales Accelerator",
+      "product_blueprint": {
+        "vision": "Transformer l'acquisition client par une plateforme intelligente de vente omnicanale, capable de conseiller, d'accompagner et de convertir les prospects avec la pertinence d'un expert humain et la scalabilité du digital.",
+        "principles": [
+          {
+            "name": "Business First",
+            "description": "Chaque fonctionnalité développée doit démontrer un impact direct sur le taux de conversion ou le coût d'acquisition."
+          },
+          {
+            "name": "API-Ready",
+            "description": "Architecture modulaire conçue pour s'intégrer de manière transparente avec les canaux de distribution existants et futurs."
+          },
+          {
+            "name": "MVP by Design",
+            "description": "Lancement rapide avec un périmètre restreint pour valider la traction commerciale avant complexification technique."
+          },
+          {
+            "name": "AI as an Enabler",
+            "description": "L'Intelligence Artificielle opère en coulisse pour augmenter les capacités de vente sans interférer avec l'expérience utilisateur naturelle."
+          },
+          {
+            "name": "Explainability by Default",
+            "description": "Toute recommandation produit est justifiée par les besoins exprimés par le client, garantissant transparence et conformité."
+          },
+          {
+            "name": "Scalable Platform",
+            "description": "Fondations techniques prêtes à absorber une montée en charge massive des interactions omnicanales sans dégradation de performance."
+          }
+        ]
+      },
+      "technical_architecture": {
+        "overview": "Une plateforme orientée micro-services, orchestrant les interactions multicanales via une couche d'intelligence centralisée.",
+        "integration": "Connexion asynchrone aux systèmes legacy pour éviter les goulots d'étranglement en phase de devis.",
+        "core_components": "Moteur de dialogue cognitif, Référentiel de produits décentralisé, Hub omnicanal de messagerie, Base de connaissances unifiée."
+      },
+      "capacities": [
+        {
+          "name": "Acquisition Omnicanale",
+          "client_section": {
+            "vision": "Être présent là où se trouvent vos futurs clients, en fluidifiant le point d'entrée.",
+            "value_added": "Capte les prospects sur leurs canaux favoris (réseaux sociaux, messagerie, web) avec une expérience unifiée.",
+            "use_case": "Un prospect scanne un QR code sur une affiche publicitaire et démarre instantanément une conversation WhatsApp avec SanlamAllianz.",
+            "user_impact": "Réduction drastique de la friction à l'entrée et augmentation du volume de leads qualifiés."
+          },
+          "internal_team_section": {
+            "data_needed": "URL des campagnes, configurations des canaux sociaux.",
+            "tech_stack": "Connecteurs Webhooks, API Graph Meta, API WhatsApp Business.",
+            "apis": "Gateway omnicanale.",
+            "key_steps": "Configuration des endpoints, gestion du routage des messages entrants, normalisation des payloads."
+          }
+        },
+        {
+          "name": "Digital Sales Assistant",
+          "client_section": {
+            "vision": "Un conseiller d'assurance digital, disponible 24/7 pour qualifier et guider le prospect.",
+            "value_added": "Automatise la découverte des besoins du client par une conversation naturelle et empathique.",
+            "use_case": "Le prospect exprime son besoin d'assurance automobile, l'assistant pose 3 questions clés pour cerner le profil de conducteur.",
+            "user_impact": "Une expérience d'avant-vente personnalisée, sans temps d'attente."
+          },
+          "internal_team_section": {
+            "data_needed": "Arbres de décision métier, scripts de conversation, ton de voix de la marque.",
+            "tech_stack": "Moteur NLP, gestionnaire d'état de dialogue.",
+            "apis": "Endpoint de NLP as a Service, API de contexte conversationnel.",
+            "key_steps": "Entraînement sur les intentions, définition des entités à extraire, paramétrage des fallbacks."
+          }
+        },
+        {
+          "name": "Product Advisor",
+          "client_section": {
+            "vision": "La bonne offre, pour le bon profil, au bon moment.",
+            "value_added": "Recommande dynamiquement les produits d'assurance les plus pertinents basés sur le contexte du client.",
+            "use_case": "L'assistant suggère une offre Tous Risques avec option bris de glace suite à l'analyse des réponses du prospect.",
+            "user_impact": "Augmentation de la pertinence de l'offre et du taux de conversion, sentiment d'être compris."
+          },
+          "internal_team_section": {
+            "data_needed": "Catalogue produits simplifié, règles de recommandation métier, grilles tarifaires indicatives.",
+            "tech_stack": "Moteur de règles métier léger, moteur d'inférence statique.",
+            "apis": "API de recommandation produit (mockup interne pour le MVP).",
+            "key_steps": "Digitalisation du catalogue produit (format JSON/NoSQL), implémentation de l'algorithme de matching produit/besoin."
+          }
+        },
+        {
+          "name": "Knowledge Hub Assurance",
+          "client_section": {
+            "vision": "L'expertise métier SanlamAllianz infusée dans chaque interaction.",
+            "value_added": "Répond instantanément à toute question technique sur les garanties, exclusions et conditions.",
+            "use_case": "Le prospect demande si les dommages causés par la grêle sont couverts ; l'assistant répond avec précision en citant les conditions générales.",
+            "user_impact": "Réassurance immédiate du client face à la complexité des contrats d'assurance."
+          },
+          "internal_team_section": {
+            "data_needed": "Fichiers PDF des conditions générales, conditions particulières, FAQ, manuels produits.",
+            "tech_stack": "Moteur d'ingestion documentaire, indexation sémantique, base vectorielle (usage interne).",
+            "apis": "API de recherche documentaire interne.",
+            "key_steps": "Parsing des PDF, nettoyage du texte, création des index de recherche, évaluation de la précision des réponses."
+          }
+        },
+        {
+          "name": "Préparation du dossier de souscription",
+          "client_section": {
+            "vision": "L'onboarding client rendu simple, rapide et sans effort.",
+            "value_added": "Collecte proactive et intelligente des données nécessaires à la création du contrat.",
+            "use_case": "L'assistant guide le client pas-à-pas pour fournir son nom, adresse et informations du véhicule.",
+            "user_impact": "Réduction du taux d'abandon en phase de finalisation du devis."
+          },
+          "internal_team_section": {
+            "data_needed": "Dictionnaire de données client, liste des champs obligatoires par produit.",
+            "tech_stack": "Formulaires conversationnels, validateurs de données dynamiques.",
+            "apis": "API de soumission de données de pré-souscription.",
+            "key_steps": "Définition des flux de collecte, implémentation des contrôles de saisie (email, téléphone, dates)."
+          }
+        },
+        {
+          "name": "Gestion documentaire (upload des pièces)",
+          "client_section": {
+            "vision": "La fin des allers-retours administratifs fastidieux.",
+            "value_added": "Permet au client de transmettre ses justificatifs directement dans le fil de la conversation.",
+            "use_case": "Le client prend en photo sa carte grise et son permis de conduire avec son smartphone et l'envoie via WhatsApp.",
+            "user_impact": "Un parcours 100% digitalisé, gain de temps considérable pour finaliser le contrat."
+          },
+          "internal_team_section": {
+            "data_needed": "Liste des documents requis, règles de validation de format (PDF, JPG, PNG).",
+            "tech_stack": "Service de stockage cloud sécurisé, analyseur de pièces jointes.",
+            "apis": "API d'upload de documents, API de webhook média.",
+            "key_steps": "Intégration du flux média des canaux sociaux, sécurisation du stockage transitoire, association des pièces au dossier prospect."
+          }
+        },
+        {
+          "name": "Rendez-vous & Handover vers un conseiller",
+          "client_section": {
+            "vision": "Le meilleur des deux mondes : la vélocité du digital et l'empathie de l'humain.",
+            "value_added": "Transfère intelligemment la conversation à un agent humain lorsque la situation l'exige ou pour finaliser la vente.",
+            "use_case": "Le client souhaite négocier le tarif ; l'assistant passe le relais à un conseiller qui reprend le contexte complet de la conversation.",
+            "user_impact": "Aucune rupture dans l'expérience client, pas besoin de répéter ses informations."
+          },
+          "internal_team_section": {
+            "data_needed": "Disponibilité des agents, règles de routage (par produit, par canal).",
+            "tech_stack": "Système de routage de tickets, interface de supervision en temps réel.",
+            "apis": "API de prise de rendez-vous (calendrier), API de handover.",
+            "key_steps": "Développement de la logique d'escalade, intégration avec les outils de calendrier, préservation du contexte de session."
+          }
+        },
+        {
+          "name": "Sales Workspace & Base Prospects",
+          "client_section": {
+            "vision": "Un pilotage commercial réinventé pour maximiser chaque opportunité.",
+            "value_added": "Centralise la gestion des prospects et facilite les actions de relance pour les équipes de vente.",
+            "use_case": "L'agent commercial accède à une vue unifiée de ses prospects chauds avec des suggestions de relance personnalisées.",
+            "user_impact": "Une relation client suivie, personnalisée et proactive."
+          },
+          "internal_team_section": {
+            "data_needed": "Données d'historique des prospects, statuts du pipeline (Nouveau, En cours, Gagné, Perdu).",
+            "tech_stack": "Application web front-end légère (SPA), base de données relationnelle (CRM light).",
+            "apis": "API CRUD Prospects, API de tâches et relances.",
+            "key_steps": "Modélisation de la base de données, développement des vues Kanban de pipeline, gestion des droits d'accès basiques."
+          }
+        }
+      ],
+      "roadmap": {
+        "V1": "Sales Assistant (Acquisition et conseil de base)",
+        "V2": "Quotation Assistant (Génération de devis dynamique)",
+        "V3": "Underwriting Assistant (Aide à la souscription)",
+        "V4": "Policy Issuance (Émission automatique de police)",
+        "V5": "Cross-Sell (Recommandation de ventes croisées)",
+        "V6": "Renewal (Gestion proactive des renouvellements)",
+        "V7": "Customer Service (Self-care et gestion des sinistres)"
+      },
+      "business_case": {
+        "assumptions": "Campagnes d'acquisition digitales actives, volume de 100k leads/an, marge moyenne par contrat.",
+        "impact": "Baisse du Coût d'Acquisition Client (CAC) de 50€ à 35€, augmentation du taux de conversion global de 4% à 5.5%.",
+        "roi_calculation": "Gain annuel estimé à 2,1 millions d'euros générés par l'augmentation des ventes et la réduction des coûts marketing.",
+        "break_even": "Point mort atteint à 6.5 mois après le lancement du MVP en production."
+      }
+    },
+    "fraud_intelligence": {
+      "title": "Fraud Intelligence Accelerator",
+      "product_blueprint": {
+        "vision": "Sécuriser la rentabilité de l'entreprise par une plateforme d'investigation augmentée, capable de détecter, d'expliquer et de prévenir les comportements frauduleux à grande échelle.",
+        "principles": [
+          {
+            "name": "Business First",
+            "description": "L'objectif principal est de réduire la charge sinistre et d'optimiser le temps des gestionnaires."
+          },
+          {
+            "name": "API-Ready",
+            "description": "Capacité à ingérer des flux de sinistres en temps réel ou en batch depuis les systèmes core de gestion."
+          },
+          {
+            "name": "MVP by Design",
+            "description": "Concentration initiale sur les lignes d'affaires les plus à risque (ex: Auto) avant extension globale."
+          },
+          {
+            "name": "AI as an Enabler",
+            "description": "L'IA ne remplace pas l'investigateur humain, elle pointe les anomalies pour accélérer sa prise de décision."
+          },
+          {
+            "name": "Explainability by Default",
+            "description": "Aucune alerte de fraude n'est levée sans une justification lisible et opposable."
+          },
+          {
+            "name": "Scalable Platform",
+            "description": "Architecture conçue pour traiter des volumes massifs de données historiques et temps réel de manière sécurisée."
+          }
+        ]
+      },
+      "technical_architecture": {
+        "overview": "Une plateforme de scoring et d'investigation, couplant des règles métier déterministes à des capacités d'analyse cognitive de données non structurées.",
+        "integration": "Récupération asynchrone des données de sinistres, découplée de la chaîne de paiement critique en MVP.",
+        "core_components": "Moteur de scoring hybride, Interface d'investigation métier, Base de connaissances fraude, Module d'explicabilité."
+      },
+      "capacities": [
+        {
+          "name": "Fraud Knowledge Base",
+          "client_section": {
+            "vision": "La mémoire institutionnelle de lutte anti-fraude, digitalisée et accessible.",
+            "value_added": "Centralise les schémas de fraude connus, les modus operandi et les cas de jurisprudence.",
+            "use_case": "Lorsqu'un nouveau type d'arnaque au bris de glace est identifié, il est documenté et sert de référence pour la détection future.",
+            "user_impact": "Augmentation immédiate du niveau de compétence de tous les gestionnaires face à des fraudes complexes."
+          },
+          "internal_team_section": {
+            "data_needed": "Historique des cas avérés de fraude, fiches de typologies de fraude, rapports d'experts.",
+            "tech_stack": "Système de gestion de contenu structuré, moteur de recherche sémantique.",
+            "apis": "API de recherche de typologies, API d'ajout de cas de référence.",
+            "key_steps": "Nettoyage de l'historique des cas de fraude, modélisation des schémas, indexation de la base."
+          }
+        },
+        {
+          "name": "Fraud Detection Engine",
+          "client_section": {
+            "vision": "Un bouclier intelligent qui analyse chaque sinistre déclaré.",
+            "value_added": "Automatise le tri des sinistres pour séparer les cas légitimes des cas suspects nécessitant une investigation.",
+            "use_case": "Le moteur score un sinistre avec une forte probabilité de légitimité, permettant un règlement instantané (Fast-Track).",
+            "user_impact": "Règlement plus rapide pour les bons clients et blocage préventif des paiements suspects."
+          },
+          "internal_team_section": {
+            "data_needed": "Données structurées du sinistre (date, lieu, montants), historique du client.",
+            "tech_stack": "Moteur de règles métier (Drools/Python), composant d'analyse de texte (NLP).",
+            "apis": "API de scoring de sinistre.",
+            "key_steps": "Définition des règles métier de premier niveau, implémentation de l'algorithme de tri, création du pipeline de scoring."
+          }
+        },
+        {
+          "name": "Fraud Investigation Workspace",
+          "client_section": {
+            "vision": "Le bureau digital de l'investigateur anti-fraude.",
+            "value_added": "Fournit une vue à 360 degrés du dossier suspect, regroupant la chronologie, les pièces et les notes d'analyse.",
+            "use_case": "L'investigateur accède à une interface centralisant la déclaration de sinistre, les photos du véhicule et les alertes du système.",
+            "user_impact": "Gain de productivité massif dans l'instruction des dossiers suspects, décisions plus fiables."
+          },
+          "internal_team_section": {
+            "data_needed": "Données complètes du dossier de sinistre, historique des interactions, documents joints.",
+            "tech_stack": "Interface web dédiée, module de gestion de workflow.",
+            "apis": "API d'accès au dossier complet, API de mise à jour de statut.",
+            "key_steps": "Création du tableau de bord de l'investigateur, développement de la timeline du sinistre, gestion des statuts de dossier."
+          }
+        },
+        {
+          "name": "Fraud Network Explorer",
+          "client_section": {
+            "vision": "Révéler les liens invisibles entre les acteurs d'une fraude organisée.",
+            "value_added": "Visualise les connexions entre différents sinistres, assurés, experts ou garages pour détecter les réseaux de fraude.",
+            "use_case": "L'interface met en évidence qu'un même numéro de téléphone est lié à trois sinistres différents déclarés par des personnes distinctes.",
+            "user_impact": "Démantèlement de réseaux de fraude organisée, générant des économies d'échelle majeures."
+          },
+          "internal_team_section": {
+            "data_needed": "Base de données clients et sinistres étendue, identifiants partagés (téléphone, IBAN, adresses).",
+            "tech_stack": "Base de données graphe légère, bibliothèque de visualisation de graphes (ex: D3.js, Cytoscape).",
+            "apis": "API d'extraction de sous-graphes.",
+            "key_steps": "Modélisation des données en noeuds (personnes, véhicules) et relations, développement du visualiseur interactif."
+          }
+        },
+        {
+          "name": "Explainable AI",
+          "client_section": {
+            "vision": "La confiance naît de la transparence et de l'explication.",
+            "value_added": "Justifie en langage clair et factuel chaque alerte de fraude remontée par le système.",
+            "use_case": "Le système indique qu'une alerte est levée car : 1. La déclaration a eu lieu 2 heures après la souscription, 2. La facture du garage semble altérée.",
+            "user_impact": "Adoption de l'outil par les équipes métier, justification solide en cas de contentieux avec l'assuré."
+          },
+          "internal_team_section": {
+            "data_needed": "Poids des règles déclenchées, extraits de textes pertinents ayant généré l'alerte.",
+            "tech_stack": "Générateur de textes à partir de templates, module de traçabilité des décisions.",
+            "apis": "API de génération d'explications de score.",
+            "key_steps": "Mapping entre règles déclenchées et explications textuelles, mise en évidence des éléments de preuve dans l'interface."
+          }
+        },
+        {
+          "name": "Case Prioritization",
+          "client_section": {
+            "vision": "Allouer le temps des experts là où l'enjeu financier est maximal.",
+            "value_added": "Trie automatiquement la file de travail des investigateurs selon la probabilité de fraude et l'enjeu financier du sinistre.",
+            "use_case": "En début de journée, le gestionnaire voit en haut de sa liste un dossier suspect d'incendie estimé à 50 000€, avant les petits accrochages.",
+            "user_impact": "Optimisation drastique du Retour sur Investissement du temps passé par les équipes de contrôle."
+          },
+          "internal_team_section": {
+            "data_needed": "Montant estimé du sinistre, score de probabilité de fraude.",
+            "tech_stack": "File de traitement priorisée, algorithmes de tri dynamiques.",
+            "apis": "API de récupération de la liste de travail ordonnée.",
+            "key_steps": "Définition de la matrice criticité/probabilité, implémentation du système de tri dans le Workspace."
+          }
+        },
+        {
+          "name": "Investigation Cockpit",
+          "client_section": {
+            "vision": "Le pilotage stratégique de la lutte anti-fraude en temps réel.",
+            "value_added": "Fournit des indicateurs de performance (KPIs) sur les dossiers traités, les montants sauvés et l'efficacité des équipes.",
+            "use_case": "Le directeur indemnisation visualise qu'en un mois, l'outil a permis d'économiser 200 000€ sur les sinistres automobiles.",
+            "user_impact": "Visibilité totale sur le ROI de la plateforme et facilitation du reporting à la direction générale."
+          },
+          "internal_team_section": {
+            "data_needed": "Statuts de clôture des dossiers suspects, montants initiaux provisionnés vs montants payés réels.",
+            "tech_stack": "Module de Business Intelligence basique, tableaux de bord de reporting.",
+            "apis": "API d'agrégation de métriques globales.",
+            "key_steps": "Définition des KPIs clés, développement des graphiques de synthèse (taux de détection, montants économisés)."
+          }
+        }
+      ],
+      "roadmap": {
+        "Phase 1": "Tri intelligent & Automatisation (Fast-Track) et Détection d'anomalies basique",
+        "Phase 2": "Workspace d'investigation et module Explainable AI",
+        "Phase 3": "Fraud Knowledge Base & Fraud Network Explorer (Analyse de réseau)",
+        "Phase 4": "Capitalisation métier continue et intégration avancée aux systèmes de gestion"
+      },
+      "business_case": {
+        "assumptions": "Charge annuelle sinistre ciblée de 100M€, coût moyen de gestion d'un dossier manuel élevé.",
+        "impact": "Augmentation de 30% de la détection de fraude (+1,5M€ sauvés), 25% de sinistres orientés en Fast-Track (500k€ d'économies OPEX).",
+        "roi_calculation": "Gain annuel total estimé à 2,0 millions d'euros (réduction de charge sinistre et efficacité opérationnelle combinées).",
+        "break_even": "Point mort atteint très rapidement à 5 mois après la mise en production du MVP."
+      }
+    }
+  }
+}

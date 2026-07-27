@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SanlamAllianz Insurance Platform - Cockpit Multi-Pays</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0075C9; /* Sanlam Lochmara Blue */
+            --primary-dark: #003781; /* Resolution / Allianz Blue */
+            --primary-glow: rgba(0, 117, 201, 0.35);
+            --secondary: #00A3E0; /* Sanlam Cyan Accent */
+            --secondary-glow: rgba(0, 163, 224, 0.35);
+            --bg-dark: #0b132b; /* Deep Navy Background */
+            --card-bg: rgba(15, 23, 42, 0.7);
+            --text-light: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-image: radial-gradient(circle at 10% 20%, rgba(0, 117, 201, 0.18) 0%, transparent 45%),
+                              radial-gradient(circle at 90% 80%, rgba(0, 163, 224, 0.15) 0%, transparent 45%);
+        }
+
+        header {
+            padding: 1rem 4rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(12px);
+            background: rgba(11, 19, 43, 0.85);
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+        }
+
+        .country-selector {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            padding: 0.5rem 1.2rem;
+            border-radius: 2rem;
+        }
+
+        .country-selector select {
+            background: transparent;
+            border: none;
+            color: var(--secondary);
+            font-weight: 700;
+            font-size: 0.95rem;
+            outline: none;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        main {
+            flex: 1;
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 3rem 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2.5rem;
+        }
+
+        .hero { text-align: center; max-width: 850px; margin: 0 auto; }
+        .hero h1 { font-size: 2.8rem; font-weight: 800; margin-bottom: 0.8rem; background: linear-gradient(to right, #ffffff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero p { color: var(--text-muted); font-size: 1.15rem; line-height: 1.6; }
+
+        .country-badge-bar {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.8rem;
+            background: rgba(0, 163, 224, 0.1);
+            border: 1px solid rgba(0, 163, 224, 0.3);
+            padding: 0.6rem 1.5rem;
+            border-radius: 2rem;
+            margin-top: 1rem;
+            font-size: 0.95rem;
+            color: #99f6e4;
+        }
+
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 2.5rem; }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 1.5rem;
+            padding: 2.2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+            backdrop-filter: blur(12px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+        }
+
+        .btn-group { display: flex; gap: 1rem; margin-top: auto; }
+        .btn { flex: 1; padding: 0.9rem 1.5rem; border-radius: 0.8rem; font-weight: 600; text-align: center; text-decoration: none; cursor: pointer; border: none; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: #005f9e; box-shadow: 0 0 15px var(--primary-glow); }
+        .btn-secondary { background: var(--secondary); color: white; }
+        .btn-secondary:hover { background: #0089bd; box-shadow: 0 0 15px var(--secondary-glow); }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: white; }
+        .btn-outline:hover { background: rgba(255,255,255,0.05); }
+
+        footer.site-footer {
+            text-align: center;
+            padding: 1.8rem;
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-top: auto;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="/" class="logo-container">
+            <svg width="220" height="50" viewBox="0 0 220 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="25" cy="25" r="22" fill="#0075C9"/>
+                <path d="M25 9C16.1634 9 9 16.1634 9 25C9 33.8366 16.1634 41 25 41C33.8366 41 41 33.8366 41 25C41 16.1634 33.8366 9 25 9ZM25 38C17.8203 38 12 32.1797 12 25C12 17.8203 17.8203 12 25 12C32.1797 12 38 17.8203 38 25C38 32.1797 32.1797 38 25 38Z" fill="#FFFFFF"/>
+                <path d="M25 15C19.4772 15 15 19.4772 15 25C15 27.5 16 29.8 17.6 31.5L25 24L32.4 31.5C34 29.8 35 27.5 35 25C35 19.4772 30.5228 15 25 15Z" fill="#FFFFFF"/>
+                <circle cx="25" cy="21" r="3.5" fill="#00A3E0"/>
+                <text x="54" y="32" font-family="'Outfit', sans-serif" font-size="23" font-weight="800" fill="#FFFFFF" letter-spacing="-0.5">
+                    Sanlam<tspan fill="#00A3E0" font-weight="400">Allianz</tspan>
+                </text>
+            </svg>
+        </a>
+        
+        <!-- Country Context Switcher -->
+        <div class="country-selector">
+            <span style="font-size:0.9rem; color:var(--text-muted);">Contexte Pays :</span>
+            <select id="country-select" onchange="switchCountry()">
+                <option value="CI" {{ 'selected' if country.code == 'CI' else '' }}>🇨🇮 Côte d'Ivoire (FCFA / SanlamAllianz CI)</option>
+                <option value="MA" {{ 'selected' if country.code == 'MA' else '' }}>🇲🇦 Maroc (MAD / Sanlam Maroc)</option>
+                <option value="SN" {{ 'selected' if country.code == 'SN' else '' }}>🇸🇳 Sénégal (FCFA / SanlamAllianz SN)</option>
+            </select>
+        </div>
+    </header>
+
+    <main>
+        <div class="hero">
+            <h1>Ekinox SanlamAllianz Platform</h1>
+            <p>Accélérateurs digitaux d'assurance auto pour <strong>{{ country.entity }}</strong> au/en <strong>{{ country.name }}</strong>.</p>
+            <div class="country-badge-bar">
+                <span>{{ country.flag }} Réglementation : <strong>{{ country.regulatory_body }}</strong></span>
+                <span>| Monnaie : <strong>{{ country.currency }}</strong></span>
+            </div>
+        </div>
+
+        <div class="grid">
+            <!-- Digital Sales -->
+            <div class="card">
+                <span style="background:rgba(0,117,201,0.2); color:#93c5fd; padding:0.3rem 0.8rem; border-radius:1rem; font-size:0.8rem; font-weight:600; width:fit-content; border:1px solid rgba(0,117,201,0.4);">Accélérateur Conversion</span>
+                <h2>Digital Sales Platform</h2>
+                <p>Acquisition conversationnelle adaptée au marché {{ country.name }} et à la gamme {{ country.entity }}.</p>
+                <div style="font-size:0.9rem; color:var(--text-muted); line-height:1.5;">
+                    <strong>Catalogue Produit Actif :</strong><br>
+                    {% for p in country.products %}
+                    • {{ p.name }} ({{ p.desc }})<br>
+                    {% endfor %}
+                </div>
+                <div class="btn-group">
+                    <a href="/sales/chat" class="btn btn-primary">Simulateur Chat {{ country.flag }}</a>
+                    <a href="/sales/workspace" class="btn btn-outline">Workspace Commercial</a>
+                </div>
+            </div>
+
+            <!-- Fraud Intelligence -->
+            <div class="card">
+                <span style="background:rgba(0,163,224,0.2); color:#99f6e4; padding:0.3rem 0.8rem; border-radius:1rem; font-size:0.8rem; font-weight:600; width:fit-content; border:1px solid rgba(0,163,224,0.4);">Accélérateur Sinistres</span>
+                <h2>Fraud Intelligence Platform</h2>
+                <p>Détection des anomalies de sinistres ajustée au barème {{ country.currency }} et aux réparateurs de {{ country.name }}.</p>
+                <div style="font-size:0.9rem; color:var(--text-muted); line-height:1.5;">
+                    <strong>Spécificités Pays :</strong><br>
+                    • Réseau Agréé : {{ country.default_garage }}<br>
+                    • Franchise Standard : {{ country.standard_franchise }} {{ country.currency }}<br>
+                    • Contrôle : {{ country.regulatory_body }}
+                </div>
+                <div class="btn-group">
+                    <a href="/fraud/workspace" class="btn btn-secondary">Workspace Investigation {{ country.flag }}</a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        © 2026 SanlamAllianz. Tous droits réservés.
+    </footer>
+
+    <script>
+        async function switchCountry() {
+            const code = document.getElementById("country-select").value;
+            const formData = new FormData();
+            formData.append("country_code", code);
+            
+            await fetch("/api/country/switch", { method: "POST", body: formData });
+            window.location.reload();
+        }
+    </script>
+</body>
+</html>
