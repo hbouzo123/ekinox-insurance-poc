@@ -741,7 +741,6 @@ Que souhaitez-vous faire ?
             synth.cancel();
             if (ttsSafetyTimer) clearTimeout(ttsSafetyTimer);
 
-            // FORCE RESUME CHROME AUDIO CONTEXT ON SECURE HTTPS (RENDER)
             try {
                 if (synth.paused) synth.resume();
             } catch(e){}
@@ -750,42 +749,71 @@ Que souhaitez-vous faire ?
             document.getElementById("call-avatar-ring").className = "voice-call-avatar-ring speaking";
             document.getElementById("call-audio-spectrum").classList.add("active");
 
-            let speechText = text.replace(/\[([^\]]+)\]/g, '').replace(/[*_#]/g, '').replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').trim();
+            // Strip action buttons & markdown
+            let cleanText = text.replace(/\[([^\]]+)\]/g, '').replace(/[*_#]/g, '').replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').trim();
 
-            const utterance = new SpeechSynthesisUtterance(speechText);
-            
-            if (/[\u0600-\u06FF]/.test(speechText)) {
-                utterance.lang = 'ar-SA';
-            } else {
-                utterance.lang = 'fr-FR';
-                loadHighQualityVoice();
-                if (bestFrenchVoice) utterance.voice = bestFrenchVoice;
+            // Split into sentences so Chrome Web Speech API NEVER truncates long utterances (>200 chars limit)
+            let rawSentences = cleanText.split(/(?<=[.!?\n])\s+/);
+            let sentences = [];
+            rawSentences.forEach(s => {
+                let trimmed = s.trim();
+                if (trimmed.length > 0) sentences.push(trimmed);
+            });
+            if (sentences.length === 0) sentences = [cleanText];
+
+            let sentenceIndex = 0;
+
+            function speakNextSentence() {
+                if (sentenceIndex >= sentences.length) {
+                    if (ttsSafetyTimer) clearTimeout(ttsSafetyTimer);
+                    document.getElementById("call-avatar-ring").className = "voice-call-avatar-ring";
+                    document.getElementById("call-audio-spectrum").classList.remove("active");
+                    isProcessing = false;
+                    restartListeningLoop();
+                    return;
+                }
+
+                let currentSentence = sentences[sentenceIndex];
+                sentenceIndex++;
+
+                const utterance = new SpeechSynthesisUtterance(currentSentence);
+                
+                if (/[\u0600-\u06FF]/.test(currentSentence)) {
+                    utterance.lang = 'ar-SA';
+                } else {
+                    utterance.lang = 'fr-FR';
+                    loadHighQualityVoice();
+                    if (bestFrenchVoice) utterance.voice = bestFrenchVoice;
+                }
+
+                utterance.rate = 0.95;
+                utterance.pitch = 1.0;
+                utterance.volume = 1.0;
+
+                utterance.onend = function() {
+                    speakNextSentence();
+                };
+
+                utterance.onerror = function(err) {
+                    console.warn("Sentence TTS error:", err);
+                    speakNextSentence();
+                };
+
+                synth.speak(utterance);
             }
 
-            utterance.rate = 0.95;
-            utterance.pitch = 1.0;
-            utterance.volume = 1.0;
-
-            const onSpeechFinished = function() {
-                if (ttsSafetyTimer) clearTimeout(ttsSafetyTimer);
+            // Global safety timeout
+            const fallbackDelay = Math.max(4000, Math.min(12000, cleanText.length * 70));
+            ttsSafetyTimer = setTimeout(() => {
+                console.warn("[TTS Safety Net] Overall fallback timeout triggered.");
+                synth.cancel();
                 document.getElementById("call-avatar-ring").className = "voice-call-avatar-ring";
                 document.getElementById("call-audio-spectrum").classList.remove("active");
                 isProcessing = false;
                 restartListeningLoop();
-            };
-
-            utterance.onend = onSpeechFinished;
-            utterance.onerror = onSpeechFinished;
-
-            // Chrome Web Speech Safety Net (force reset after estimated speech length max 6s)
-            const fallbackDelay = Math.max(3000, Math.min(7000, speechText.length * 60));
-            ttsSafetyTimer = setTimeout(() => {
-                console.warn("[TTS Safety Net] Chrome TTS timeout fallback triggered.");
-                synth.cancel();
-                onSpeechFinished();
             }, fallbackDelay);
 
-            synth.speak(utterance);
+            speakNextSentence();
         }
 
         function toggleMuteMic() {
