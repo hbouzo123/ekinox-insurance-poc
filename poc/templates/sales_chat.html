@@ -614,6 +614,7 @@ Que souhaitez-vous faire ?
 
                 if (silenceDebounceTimer) clearTimeout(silenceDebounceTimer);
                 
+                // 2200ms silence debounce delay to allow natural speech pauses on cloud Render
                 silenceDebounceTimer = setTimeout(async () => {
                     if (!isProcessing && isCallActive && currentVoiceBuffer.trim().length > 0) {
                         isProcessing = true;
@@ -626,7 +627,7 @@ Que souhaitez-vous faire ?
                         currentVoiceBuffer = '';
                         await processVoiceInput(textToSend);
                     }
-                }, 1800);
+                }, 2200);
             };
 
             recognition.onerror = function(event) {
@@ -638,14 +639,14 @@ Que souhaitez-vous faire ?
                 }
                 if (isCallActive && !isMuted && synth && !synth.speaking) {
                     isProcessing = false;
-                    setTimeout(restartListeningLoop, 300);
+                    setTimeout(restartListeningLoop, 400);
                 }
             };
 
             recognition.onend = function() {
                 if (isCallActive && !isMuted && synth && !synth.speaking) {
                     isProcessing = false;
-                    setTimeout(restartListeningLoop, 300);
+                    setTimeout(restartListeningLoop, 400);
                 }
             };
         }
