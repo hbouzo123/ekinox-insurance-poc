@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Digital Sales - SanlamAllianz WhatsApp Simulator</title>
+    <title>Digital Sales - SanlamAllianz WhatsApp Simulator & Voice Agent</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -17,6 +17,8 @@
             --text-muted: #94a3b8;
             --border: rgba(255, 255, 255, 0.1);
             --wa-bg: #efeae2;
+            --danger: #ef4444;
+            --success: #10b981;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -43,7 +45,7 @@
 
         .logo-container { display: flex; align-items: center; text-decoration: none; }
 
-        .header-actions { display: flex; align-items: center; gap: 1.2rem; }
+        .header-actions { display: flex; align-items: center; gap: 1rem; }
 
         .ux-variant-toggle {
             display: flex;
@@ -68,6 +70,27 @@
         .ux-btn.active {
             background: var(--primary);
             color: white;
+        }
+
+        .btn-start-call {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: none;
+            padding: 0.45rem 1rem;
+            border-radius: 1.5rem;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+            transition: all 0.2s ease;
+        }
+
+        .btn-start-call:hover {
+            transform: scale(1.03);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.6);
         }
 
         .channel-picker {
@@ -127,14 +150,31 @@
             padding: 1.8rem 1.2rem 0.8rem 1.2rem;
             display: flex;
             align-items: center;
-            gap: 0.8rem;
+            justify-content: space-between;
             color: white;
             flex-shrink: 0;
         }
 
+        .wa-header-left { display: flex; align-items: center; gap: 0.8rem; }
         .wa-avatar { width: 36px; height: 36px; border-radius: 50%; background: #0075C9; display: flex; align-items: center; justify-content: center; font-weight: 800; }
         .wa-info h3 { font-size: 0.95rem; font-weight: 600; }
         .wa-info p { font-size: 0.75rem; color: #00A3E0; }
+
+        .header-call-icon {
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid #10b981;
+            color: #34d399;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .header-call-icon:hover { background: #10b981; color: white; }
 
         .wa-chat-area {
             flex: 1;
@@ -248,6 +288,111 @@
         .action-highlight { background: rgba(0, 117, 201, 0.12); border-color: rgba(0, 117, 201, 0.3); color: #93c5fd; font-weight: 600; }
 
         #file-input { display: none; }
+
+        /* ---------------------------------------------------- */
+        /* VOICE CALL OVERLAY MODAL (METHOD 1 - 100% FREE VOICE) */
+        /* ---------------------------------------------------- */
+        .voice-call-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(180deg, #001e43 0%, #060e20 100%);
+            z-index: 100;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 3rem 1.5rem 2.5rem 1.5rem;
+            color: white;
+        }
+
+        .voice-call-header { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; }
+        .voice-call-avatar-ring {
+            width: 100px; height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #0075C9, #00A3E0);
+            display: flex; align-items: center; justify-content: center;
+            position: relative;
+            margin-bottom: 1rem;
+            box-shadow: 0 0 30px rgba(0, 163, 224, 0.4);
+        }
+
+        .voice-call-avatar-ring.speaking {
+            animation: pulseRing 1.5s infinite ease-in-out;
+        }
+
+        @keyframes pulseRing {
+            0% { box-shadow: 0 0 0 0 rgba(0, 163, 224, 0.7); }
+            70% { box-shadow: 0 0 0 25px rgba(0, 163, 224, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 163, 224, 0); }
+        }
+
+        .voice-call-name { font-size: 1.25rem; font-weight: 700; }
+        .voice-call-status { font-size: 0.85rem; color: #38bdf8; font-weight: 600; }
+        .voice-call-timer { font-size: 1.1rem; color: #94a3b8; font-weight: 600; font-family: monospace; }
+
+        .voice-transcript-box {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            border-radius: 1rem;
+            min-height: 90px;
+            max-height: 140px;
+            overflow-y: auto;
+            font-size: 0.85rem;
+            line-height: 1.4;
+            color: #e2e8f0;
+            text-align: center;
+        }
+
+        .audio-spectrum {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            height: 35px;
+            width: 100%;
+        }
+
+        .audio-bar {
+            width: 4px;
+            height: 8px;
+            background: #00A3E0;
+            border-radius: 2px;
+            transition: height 0.1s ease;
+        }
+
+        .audio-spectrum.active .audio-bar {
+            animation: wave 0.8s infinite ease-in-out alternate;
+        }
+
+        .audio-bar:nth-child(1) { animation-delay: 0.1s; }
+        .audio-bar:nth-child(2) { animation-delay: 0.3s; }
+        .audio-bar:nth-child(3) { animation-delay: 0.2s; }
+        .audio-bar:nth-child(4) { animation-delay: 0.4s; }
+        .audio-bar:nth-child(5) { animation-delay: 0.15s; }
+
+        @keyframes wave {
+            0% { height: 6px; }
+            100% { height: 32px; background: #38bdf8; }
+        }
+
+        .voice-call-controls { display: flex; align-items: center; gap: 1.8rem; }
+
+        .call-btn-circle {
+            width: 54px; height: 54px;
+            border-radius: 50%;
+            border: none;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            color: white;
+            transition: all 0.2s ease;
+        }
+
+        .btn-mute { background: rgba(255, 255, 255, 0.15); }
+        .btn-mute.active { background: #eab308; }
+        .btn-end-call { background: #ef4444; width: 62px; height: 62px; box-shadow: 0 0 20px rgba(239, 68, 68, 0.5); }
+        .btn-end-call:hover { transform: scale(1.05); }
     </style>
 </head>
 <body>
@@ -266,6 +411,13 @@
         </a>
         
         <div class="header-actions">
+            <!-- Voice Call Header Button -->
+            <button class="btn-start-call" onclick="startVoiceCall()">
+                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                Appel Vocal IA (0€)
+            </button>
+
+            <!-- UX Variant Toggle -->
             <div class="ux-variant-toggle">
                 <button class="ux-btn active" id="btn-opt-a" onclick="setUXVariant('A')">Option A (WhatsApp Flash)</button>
                 <button class="ux-btn" id="btn-opt-b" onclick="setUXVariant('B')">Option B (Orienter & Qualifier)</button>
@@ -289,11 +441,56 @@
         <div class="simulator-panel">
             <div class="phone-wrapper">
                 <div class="phone-notch"></div>
+                
+                <!-- Voice Call Overlay (Method 1) -->
+                <div class="voice-call-overlay" id="voice-call-modal">
+                    <div class="voice-call-header">
+                        <div class="voice-call-avatar-ring" id="call-avatar-ring">
+                            <svg width="46" height="46" viewBox="0 0 100 100" fill="none">
+                                <circle cx="50" cy="50" r="45" fill="#0075C9"/>
+                                <path d="M50 20L28 32V54C28 68 50 78 50 78C50 78 72 68 72 54V32L50 20Z" fill="#00A3E0"/>
+                                <path d="M42 46L48 52L60 40" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <div class="voice-call-name">Conseiller SanlamAllianz</div>
+                        <div class="voice-call-status" id="call-status-text">Connexion en cours...</div>
+                        <div class="voice-call-timer" id="call-timer">00:00</div>
+                    </div>
+
+                    <div class="voice-transcript-box" id="call-transcript-box">
+                        Appuyez sur le micro et parlez librement. Votre conseiller virtuel vous répond de vive voix.
+                    </div>
+
+                    <!-- Animated Audio Spectrum Visualizer -->
+                    <div class="audio-spectrum" id="call-audio-spectrum">
+                        <div class="audio-bar"></div>
+                        <div class="audio-bar"></div>
+                        <div class="audio-bar"></div>
+                        <div class="audio-bar"></div>
+                        <div class="audio-bar"></div>
+                    </div>
+
+                    <div class="voice-call-controls">
+                        <button class="call-btn-circle btn-mute" id="btn-mute-mic" onclick="toggleMuteMic()" title="Muter le micro">
+                            <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>
+                        </button>
+
+                        <button class="call-btn-circle btn-end-call" onclick="endVoiceCall()" title="Raccrocher">
+                            <svg width="26" height="26" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M5 3a2 2 0 00-2 2v1c0 8.284 6.716 15 15 15h1a2 2 0 002-2v-3.28a1 1 0 00-.684-.948l-4.493-1.498a1 1 0 00-1.21.502l-1.13 2.257a11.042 11.042 0 01-5.516-5.516l2.257-1.13a1 1 0 00.502-1.21L8.228 3.684A1 1 0 007.28 3H5z"/></svg>
+                        </button>
+                    </div>
+                </div>
+
                 <div class="wa-header">
-                    <div class="wa-avatar">S</div>
-                    <div class="wa-info">
-                        <h3>SanlamAllianz Assistant</h3>
-                        <p id="wa-channel-tag">Canal : WhatsApp Direct</p>
+                    <div class="wa-header-left">
+                        <div class="wa-avatar">S</div>
+                        <div class="wa-info">
+                            <h3>SanlamAllianz Assistant</h3>
+                            <p id="wa-channel-tag">Canal : WhatsApp Direct</p>
+                        </div>
+                    </div>
+                    <div class="header-call-icon" onclick="startVoiceCall()" title="Démarrer l'appel vocal">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
                     </div>
                 </div>
                 
@@ -308,7 +505,7 @@ Que souhaitez-vous faire ?
                         <div class="chips-container" id="initial-chips">
                             <button class="quick-chip" onclick="clickQuickReply('📊 Faire une simulation rapide')">📊 Faire une simulation rapide</button>
                             <button class="quick-chip" onclick="triggerUpload()">📄 Envoyer ma Carte Grise</button>
-                            <button class="quick-chip" onclick="clickQuickReply('🗓️ Prendre RDV / Être rappelé')">🗓️ Prendre RDV / Être rappelé</button>
+                            <button class="quick-chip" onclick="startVoiceCall()">📞 Démarrer l'Appel Vocal Conseiller (0€)</button>
                         </div>
                     </div>
                 </div>
@@ -355,6 +552,148 @@ Que souhaitez-vous faire ?
     <script>
         const prospectId = "lead-live-" + Math.floor(Math.random() * 10000);
 
+        /* ----------------------------------------------------------- */
+        /* METHOD 1: 100% FREE VOICE CALL ENGINE (STT + LLM + TTS)     */
+        /* ----------------------------------------------------------- */
+        let recognition = null;
+        let isCallActive = false;
+        let isMuted = false;
+        let callTimerInterval = null;
+        let callSeconds = 0;
+        let synth = window.speechSynthesis;
+
+        // Initialize Speech Recognition
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.lang = 'fr-FR';
+            recognition.continuous = false;
+            recognition.interimResults = false;
+
+            recognition.onresult = async function(event) {
+                const text = event.results[0][0].transcript;
+                document.getElementById("call-transcript-box").innerHTML = `🗣️ <strong>Vous :</strong> "${text}"`;
+                document.getElementById("call-status-text").innerText = "Réflexion du conseiller IA...";
+                document.getElementById("call-audio-spectrum").classList.remove("active");
+
+                // Send speech to LLM API
+                await processVoiceInput(text);
+            };
+
+            recognition.onerror = function(event) {
+                if (isCallActive && !isMuted) {
+                    document.getElementById("call-status-text").innerText = "Le conseiller écoute... 🎙️";
+                    try { recognition.start(); } catch(e){}
+                }
+            };
+        }
+
+        function startVoiceCall() {
+            if (!SpeechRecognition) {
+                alert("La reconnaissance vocale native n'est pas supportée sur ce navigateur. Utilisez Chrome, Edge ou Safari.");
+                return;
+            }
+
+            isCallActive = true;
+            isMuted = false;
+            callSeconds = 0;
+            document.getElementById("voice-call-modal").style.display = "flex";
+            document.getElementById("call-status-text").innerText = "Conseiller connecté 🟢";
+            document.getElementById("call-transcript-box").innerText = "Bonjour ! Je suis votre conseiller SanlamAllianz. Je vous écoute !";
+
+            // Call timer
+            callTimerInterval = setInterval(() => {
+                callSeconds++;
+                const mins = String(Math.floor(callSeconds / 60)).padStart(2, '0');
+                const secs = String(callSeconds % 60).padStart(2, '0');
+                document.getElementById("call-timer").innerText = `${mins}:${secs}`;
+            }, 1000);
+
+            // Initial spoken greeting
+            speakText("Bonjour ! Je suis votre conseiller SanlamAllianz. Quel est votre véhicule ou votre besoin d'assurance ?");
+        }
+
+        async function processVoiceInput(userText) {
+            parseAndAppendMessage("user", `[Appel Vocal] ${userText}`);
+
+            const channel = document.getElementById("channel-select").value;
+            const formData = new FormData();
+            formData.append("prospect_id", prospectId);
+            formData.append("message", userText);
+            formData.append("channel", channel);
+
+            try {
+                const response = await fetch("/api/sales/chat", { method: "POST", body: formData });
+                const data = await response.json();
+
+                if (data.status === "success") {
+                    let cleanedReply = data.reply.replace(/\[([^\]]+)\]/g, '').trim();
+                    parseAndAppendMessage("assistant", data.reply);
+                    updateIntelPanel(data.prospect_state);
+                    
+                    document.getElementById("call-transcript-box").innerHTML = `🤖 <strong>Conseiller :</strong> "${cleanedReply}"`;
+                    speakText(cleanedReply);
+                }
+            } catch(e) {
+                speakText("Pardon, j'ai eu une petite coupure de réseau. Pouvez-vous répéter ?");
+            }
+        }
+
+        function speakText(text) {
+            if (!synth) return;
+            synth.cancel();
+
+            document.getElementById("call-status-text").innerText = "Le conseiller répond... 🔊";
+            document.getElementById("call-avatar-ring").classList.add("speaking");
+            document.getElementById("call-audio-spectrum").classList.add("active");
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'fr-FR';
+            utterance.rate = 1.0;
+
+            utterance.onend = function() {
+                document.getElementById("call-avatar-ring").classList.remove("speaking");
+                document.getElementById("call-audio-spectrum").classList.remove("active");
+
+                if (isCallActive && !isMuted) {
+                    document.getElementById("call-status-text").innerText = "Le conseiller écoute... 🎙️";
+                    try { recognition.start(); } catch(e){}
+                }
+            };
+
+            synth.speak(utterance);
+        }
+
+        function toggleMuteMic() {
+            isMuted = !isMuted;
+            const btn = document.getElementById("btn-mute-mic");
+            if (isMuted) {
+                btn.classList.add("active");
+                if (recognition) recognition.stop();
+                document.getElementById("call-status-text").innerText = "Micro coupé 🔇";
+            } else {
+                btn.classList.remove("active");
+                document.getElementById("call-status-text").innerText = "Le conseiller écoute... 🎙️";
+                if (recognition) try { recognition.start(); } catch(e){}
+            }
+        }
+
+        function endVoiceCall() {
+            isCallActive = false;
+            if (synth) synth.cancel();
+            if (recognition) recognition.stop();
+            clearInterval(callTimerInterval);
+
+            document.getElementById("voice-call-modal").style.display = "none";
+            document.getElementById("call-avatar-ring").classList.remove("speaking");
+            document.getElementById("call-audio-spectrum").classList.remove("active");
+
+            parseAndAppendMessage("assistant", `📞 **Fin de l'appel vocal** (${document.getElementById("call-timer").innerText}). Résumé sauvegardé dans la fiche prospect.\n\n[📊 Obtenir mon devis par écrit] [🗓️ Confirmer mon RDV]`);
+        }
+
+        /* ----------------------------------------------------------- */
+        /* STANDARD CHAT UX & MONITORING                                */
+        /* ----------------------------------------------------------- */
         function setUXVariant(variant) {
             document.getElementById("btn-opt-a").className = `ux-btn ${variant === 'A' ? 'active' : ''}`;
             document.getElementById("btn-opt-b").className = `ux-btn ${variant === 'B' ? 'active' : ''}`;
@@ -374,7 +713,7 @@ Que souhaitez-vous faire ?
                         <div class="chips-container">
                             <button class="quick-chip" onclick="clickQuickReply('📊 Faire une simulation rapide')">📊 Faire une simulation rapide</button>
                             <button class="quick-chip" onclick="triggerUpload()">📄 Envoyer ma Carte Grise</button>
-                            <button class="quick-chip" onclick="clickQuickReply('🗓️ Prendre RDV / Être rappelé')">🗓️ Prendre RDV / Être rappelé</button>
+                            <button class="quick-chip" onclick="startVoiceCall()">📞 Démarrer l'Appel Vocal Conseiller (0€)</button>
                         </div>
                     </div>
                 `;
@@ -393,7 +732,7 @@ Comment souhaitez-vous démarrer ?
                         <div class="chips-container">
                             <button class="quick-chip" onclick="clickQuickReply('🚗 Obtenir un tarif immédiat')">🚗 Obtenir un tarif immédiat</button>
                             <button class="quick-chip" onclick="triggerUpload()">📄 Scanner ma Carte Grise</button>
-                            <button class="quick-chip" onclick="clickQuickReply('💬 Parler à un conseiller')">💬 Parler à un conseiller</button>
+                            <button class="quick-chip" onclick="startVoiceCall()">📞 Démarrer l'Appel Vocal (0€)</button>
                         </div>
                     </div>
                 `;
@@ -429,6 +768,8 @@ Comment souhaitez-vous démarrer ?
                     chipBtn.onclick = () => {
                         if (btnLabel.toLowerCase().includes("carte grise") || btnLabel.toLowerCase().includes("scanner")) {
                             triggerUpload();
+                        } else if (btnLabel.toLowerCase().includes("appel") || btnLabel.toLowerCase().includes("vocal")) {
+                            startVoiceCall();
                         } else {
                             clickQuickReply(btnLabel);
                         }
