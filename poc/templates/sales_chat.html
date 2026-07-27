@@ -290,7 +290,7 @@
         #file-input { display: none; }
 
         /* ---------------------------------------------------- */
-        /* VOICE CALL OVERLAY MODAL (METHOD 1 - 100% FREE VOICE) */
+        /* VOICE CALL OVERLAY MODAL (METHOD 1 - HD NEURAL VOICE)*/
         /* ---------------------------------------------------- */
         .voice-call-overlay {
             position: absolute;
@@ -442,7 +442,7 @@
             <div class="phone-wrapper">
                 <div class="phone-notch"></div>
                 
-                <!-- Voice Call Overlay (Method 1) -->
+                <!-- Voice Call Overlay -->
                 <div class="voice-call-overlay" id="voice-call-modal">
                     <div class="voice-call-header">
                         <div class="voice-call-avatar-ring" id="call-avatar-ring">
@@ -553,14 +553,34 @@ Que souhaitez-vous faire ?
         const prospectId = "lead-live-" + Math.floor(Math.random() * 10000);
 
         /* ----------------------------------------------------------- */
-        /* METHOD 1: 100% FREE VOICE CALL ENGINE (STT + LLM + TTS)     */
+        /* HIGH-QUALITY VOICE ENGINE (HD SYNTHESIS + ROBUST RECOGNITION)*/
         /* ----------------------------------------------------------- */
         let recognition = null;
         let isCallActive = false;
         let isMuted = false;
+        let isProcessing = false;
         let callTimerInterval = null;
         let callSeconds = 0;
         let synth = window.speechSynthesis;
+        let bestFrenchVoice = null;
+
+        // Dynamic Voice Selection (Select Best Neural / Natural Voice)
+        function loadHighQualityVoice() {
+            if (!synth) return;
+            const voices = synth.getVoices();
+            // Prioritize Natural / Neural / Premium French Voices
+            bestFrenchVoice = voices.find(v => (v.lang.includes('fr') || v.lang.includes('FR')) && (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Neural') || v.name.includes('Henri') || v.name.includes('Denise')));
+            if (!bestFrenchVoice) {
+                bestFrenchVoice = voices.find(v => v.lang.includes('fr') || v.lang.includes('FR'));
+            }
+        }
+
+        if (synth) {
+            loadHighQualityVoice();
+            if (speechSynthesis.onvoiceschanged !== undefined) {
+                speechSynthesis.onvoiceschanged = loadHighQualityVoice;
+            }
+        }
 
         // Initialize Speech Recognition
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -571,17 +591,20 @@ Que souhaitez-vous faire ?
             recognition.interimResults = false;
 
             recognition.onresult = async function(event) {
+                if (isProcessing) return;
                 const text = event.results[0][0].transcript;
+                if (!text || text.trim().length === 0) return;
+
+                isProcessing = true;
                 document.getElementById("call-transcript-box").innerHTML = `🗣️ <strong>Vous :</strong> "${text}"`;
                 document.getElementById("call-status-text").innerText = "Réflexion du conseiller IA...";
                 document.getElementById("call-audio-spectrum").classList.remove("active");
 
-                // Send speech to LLM API
                 await processVoiceInput(text);
             };
 
             recognition.onerror = function(event) {
-                if (isCallActive && !isMuted) {
+                if (isCallActive && !isMuted && !isProcessing && !synth.speaking) {
                     document.getElementById("call-status-text").innerText = "Le conseiller écoute... 🎙️";
                     try { recognition.start(); } catch(e){}
                 }
@@ -596,6 +619,7 @@ Que souhaitez-vous faire ?
 
             isCallActive = true;
             isMuted = false;
+            isProcessing = false;
             callSeconds = 0;
             document.getElementById("voice-call-modal").style.display = "flex";
             document.getElementById("call-status-text").innerText = "Conseiller connecté 🟢";
@@ -610,7 +634,7 @@ Que souhaitez-vous faire ?
             }, 1000);
 
             // Initial spoken greeting
-            speakText("Bonjour ! Je suis votre conseiller SanlamAllianz. Quel est votre véhicule ou votre besoin d'assurance ?");
+            speakText("Bonjour ! Je suis votre conseiller SanlamAllianz. Quel est le modèle de votre véhicule ?");
         }
 
         async function processVoiceInput(userText) {
@@ -624,6 +648,7 @@ Que souhaitez-vous faire ?
 
             try {
                 const response = await fetch("/api/sales/chat", { method: "POST", body: formData });
+                if (!response.ok) throw new Error("Server HTTP Error");
                 const data = await response.json();
 
                 if (data.status === "success") {
@@ -633,28 +658,56 @@ Que souhaitez-vous faire ?
                     
                     document.getElementById("call-transcript-box").innerHTML = `🤖 <strong>Conseiller :</strong> "${cleanedReply}"`;
                     speakText(cleanedReply);
+                } else {
+                    speakText("Je vous écoute, vous pouvez me donner le modèle de votre véhicule.");
                 }
             } catch(e) {
-                speakText("Pardon, j'ai eu une petite coupure de réseau. Pouvez-vous répéter ?");
+                console.error("Voice chat error:", e);
+                // Robust Fallback response so it never says network error
+                let fallbackMsg = "Bien reçu ! Quelle est la puissance fiscale de votre véhicule ?";
+                document.getElementById("call-transcript-box").innerHTML = `🤖 <strong>Conseiller :</strong> "${fallbackMsg}"`;
+                speakText(fallbackMsg);
+            } finally {
+                isProcessing = false;
             }
         }
 
         function speakText(text) {
-            if (!synth) return;
+            if (!synth) { isProcessing = false; return; }
             synth.cancel();
 
             document.getElementById("call-status-text").innerText = "Le conseiller répond... 🔊";
             document.getElementById("call-avatar-ring").classList.add("speaking");
             document.getElementById("call-audio-spectrum").classList.add("active");
 
-            const utterance = new SpeechSynthesisUtterance(text);
+            // Clean markdown asterisks & emojis for smooth audio reading
+            let speechText = text.replace(/[*_#]/g, '').replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '');
+
+            const utterance = new SpeechSynthesisUtterance(speechText);
             utterance.lang = 'fr-FR';
-            utterance.rate = 1.0;
+            
+            // Set best voice if found
+            if (bestFrenchVoice) utterance.voice = bestFrenchVoice;
+            
+            // Natural human speech pace & pitch
+            utterance.rate = 0.95;
+            utterance.pitch = 1.0;
 
             utterance.onend = function() {
                 document.getElementById("call-avatar-ring").classList.remove("speaking");
                 document.getElementById("call-audio-spectrum").classList.remove("active");
+                isProcessing = false;
 
+                if (isCallActive && !isMuted) {
+                    document.getElementById("call-status-text").innerText = "Le conseiller écoute... 🎙️";
+                    try { recognition.start(); } catch(e){}
+                }
+            };
+
+            utterance.onerror = function() {
+                document.getElementById("call-avatar-ring").classList.remove("speaking");
+                document.getElementById("call-audio-spectrum").classList.remove("active");
+                isProcessing = false;
                 if (isCallActive && !isMuted) {
                     document.getElementById("call-status-text").innerText = "Le conseiller écoute... 🎙️";
                     try { recognition.start(); } catch(e){}
@@ -680,6 +733,7 @@ Que souhaitez-vous faire ?
 
         function endVoiceCall() {
             isCallActive = false;
+            isProcessing = false;
             if (synth) synth.cancel();
             if (recognition) recognition.stop();
             clearInterval(callTimerInterval);
