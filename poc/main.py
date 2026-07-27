@@ -1,51 +1,50 @@
-from fastapi import FastAPI, Request, Form, HTTPException
-from fastapi.templating import Jinja2Templates
-from sales.routes import router as sales_router
-from fraud.routes import router as fraud_router
-from core import config, database
-import uvicorn
+import sys
 import os
+import io
 
-app = FastAPI(
-    title="Ekinox Insurance Platform - Multi-Country SanlamAllianz POC",
-    description="POC interactif multi-pays - Côte d'Ivoire, Maroc, Sénégal",
-    version="2.0.0"
+# Force UTF-8 encoding on Windows console to prevent cp1252 crashes with Arabic script
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+if hasattr(sys.stderr, 'reconfigure'):
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+
+from fastapi import FastAPI, Request
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from fastapi.middleware.cors import CORSMiddleware
+import uvicorn
+
+from core import config, database
+from sales import routes as sales_routes
+from fraud import routes as fraud_routes
+
+app = FastAPI(title="Ekinox Insurance Platform - SanlamAllianz Digital Acceleration", version="2.0.0")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-# Disable Browser Caching Middleware for Live Local Development & Render
 @app.middleware("http")
-async def add_no_cache_headers(request: Request, call_next):
+async def add_no_cache_header(request: Request, call_next):
     response = await call_next(request)
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
     response.headers["Pragma"] = "no-cache"
     response.headers["Expires"] = "0"
     return response
 
-os.makedirs("templates", exist_ok=True)
+# Mount routes
+app.include_router(sales_routes.router)
+app.include_router(fraud_routes.router)
+
 templates = Jinja2Templates(directory="templates")
 
-app.include_router(sales_router)
-app.include_router(fraud_router)
-
-# Country Switch Endpoints
-@app.get("/api/country/active")
-def get_active_country():
-    """Get active country configuration."""
-    code = database.ACTIVE_COUNTRY
-    return database.COUNTRY_CONFIGS.get(code, database.COUNTRY_CONFIGS["CI"])
-
-@app.post("/api/country/switch")
-def switch_country(country_code: str = Form(...)):
-    """Switch active country context (CI, MA, SN)."""
-    if country_code not in database.COUNTRY_CONFIGS:
-        raise HTTPException(status_code=400, detail="Invalid country code. Choose CI, MA, or SN.")
-    cfg = database.set_active_country(country_code)
-    return {"status": "success", "active_country": cfg}
-
-# Page Views
 @app.get("/")
-def home(request: Request):
-    """Render central platform cockpit with country context."""
+def index_view(request: Request):
+    """Render central platform cockpit & country switcher."""
     cfg = database.COUNTRY_CONFIGS[database.ACTIVE_COUNTRY]
     return templates.TemplateResponse(request, "index.html", {"country": cfg, "all_countries": database.COUNTRY_CONFIGS})
 

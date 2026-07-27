@@ -7,7 +7,8 @@ FRENCH_STOP_WORDS = {
     "voiture", "auto", "devis", "tarif", "prix", "bonjour", "salut", "quand", "quel",
     "quelle", "quelques", "chose", "merci", "voilà", "voila", "c'est", "fait", "est",
     "suis", "sommes", "êtes", "sont", "nous", "vous", "ils", "elles", "mon", "ma", "mes",
-    "ton", "ta", "tes", "son", "sa", "ses", "notre", "votre", "leur", "ce", "cette", "ces"
+    "ton", "ta", "tes", "son", "sa", "ses", "notre", "votre", "leur", "ce", "cette", "ces",
+    "famille", "est-ce", "que", "tu", "peux", "arrives", "me", "comprendre", "arabe", "culture"
 }
 
 def handle_sales_conversation(prospect_id: str, message_text: str, channel: str = "WhatsApp") -> dict:
@@ -100,8 +101,8 @@ def extract_dynamic_name(text: str) -> str:
     
     # 1. Look for explicit name patterns
     patterns = [
-        r"(?:je m'appelle|moi c'est|mon nom est|mon prénom est|je suis|c'est)\s+([a-zà-ÿA-ZÀ-Ÿ]{2,20}(?:\s+[a-zà-ÿA-ZÀ-Ÿ]{2,20})?)",
-        r"\b([A-ZÀ-Z][a-zà-ÿ]{2,15}(?:\s+[A-ZÀ-Z][a-zà-ÿ]{2,15})?)\b"
+        r"(?:je m'appelle|moi c'est|mon nom est|mon prénom est|je suis|c'est)\s+([a-zA-Z]{2,20}(?:\s+[a-zA-Z]{2,20})?)",
+        r"\b([A-Z][a-z]{2,15}(?:\s+[A-Z][a-z]{2,15})?)\b"
     ]
     
     for pattern in patterns:
@@ -109,12 +110,10 @@ def extract_dynamic_name(text: str) -> str:
         if match:
             candidate = match.group(1).strip().title()
             candidate_words = candidate.lower().split()
-            # Verify candidate is not composed of stop words
             if not any(w in FRENCH_STOP_WORDS for w in candidate_words) and len(candidate) >= 3:
                 return candidate
                 
-    # 2. If single capitalized word is passed (e.g., "Heithem" or "Boussoffara")
-    words = [w for w in re.findall(r'\b[a-zà-ÿA-ZÀ-Ÿ]{3,20}\b', text_clean) if w.lower() not in FRENCH_STOP_WORDS]
+    words = [w for w in re.findall(r'\b[a-zA-Z]{3,20}\b', text_clean) if w.lower() not in FRENCH_STOP_WORDS]
     if len(words) == 1:
         return words[0].title()
         
