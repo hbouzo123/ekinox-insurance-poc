@@ -44,6 +44,7 @@ async def sales_upload(prospect_id: str = Form(...), file: UploadFile = File(...
         
         prospect["document_uploaded"] = True
         prospect["document_name"] = file.filename
+        prospect["intention"] = "Chaud 🔥"
         
         ext_data = result["extracted_data"]
         confirmation_msg = f"Document '{file.filename}' analysé avec succès ({result['type']}). "
@@ -77,6 +78,7 @@ def schedule_appointment(prospect_id: str = Form(...), slot_date: str = Form(...
     prospect = database.PROSPECTS[prospect_id]
     appointment_str = f"{slot_date} à {slot_time}"
     prospect["appointment"] = appointment_str
+    prospect["intention"] = "Chaud 🔥"
     prospect["next_action"] = f"Rendez-vous téléphonique confirmé pour le {appointment_str}."
     
     confirm_msg = f"🗓️ Votre rendez-vous avec notre conseiller commercial est confirmé pour le **{appointment_str}**. Une notification de rappel vous sera envoyée."

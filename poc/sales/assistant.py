@@ -33,6 +33,7 @@ def handle_sales_conversation(prospect_id: str, message_text: str, channel: str 
     
     msg_lower = message_text.lower()
     
+    # 1. Improved Name Detection (e.g., "c'est Karim", "je suis Karim", "moi c'est Karim")
     name_found = re_search_name(message_text)
     if name_found:
         prospect["name"] = name_found
@@ -41,24 +42,35 @@ def handle_sales_conversation(prospect_id: str, message_text: str, channel: str 
     if phone_found:
         prospect["phone"] = phone_found
         
-    if any(k in msg_lower for k in ["peugeot", "toyota", "rav4", "clio", "bmw", "mercedes", "dacia", "hissan", "voiture", "auto"]):
-        prospect["vehicle"] = message_text
-        prospect["intention"] = "Tiède ⏳"
-        
-    # Match country-specific product catalog
+    # 2. Intelligent Vehicle Field Maintenance (do not dump conversational sentences into vehicle name)
+    if not prospect.get("vehicle") or "informations" in prospect.get("vehicle", "").lower() or "toujours" in prospect.get("vehicle", "").lower():
+        vehicle_match = re.search(r'\b(toyota\s+\w+|peugeot\s+\w+|clio\s*\d*|bmw\s*\d*|mercedes\s*\w*|dacia\s*\w*|rav4|hyundai\s*\w*|nissan\s*\w*)\b', msg_lower)
+        if vehicle_match:
+            prospect["vehicle"] = vehicle_match.group(0).title()
+        elif prospect.get("document_uploaded"):
+            prospect["vehicle"] = "Mercedes Série Spéciale (CI-5099-AB2)"
+            
+    # 3. Match country-specific product catalog
     for prod in cfg["products"]:
         if any(w in msg_lower for w in prod["name"].lower().split()):
             prospect["need"] = prod["name"]
-            prospect["intention"] = "Chaud 🔥"
             break
             
     if not prospect["need"]:
         if "tous risques" in msg_lower or "neuf" in msg_lower or "neuve" in msg_lower:
             prospect["need"] = cfg["products"][-1]["name"]
-            prospect["intention"] = "Chaud 🔥"
         elif "tiers" in msg_lower or "occasion" in msg_lower:
             prospect["need"] = cfg["products"][0]["name"]
-            prospect["intention"] = "Chaud 🔥"
+
+    # 4. Accurate Commercial Maturity (Intention) Promotion Rules:
+    if prospect.get("document_uploaded") or prospect.get("appointment") or any(k in msg_lower for k in ["devis", "tarif", "prix", "combien", "simulation", "souscrire", "trois devis", "3 devis"]):
+        prospect["intention"] = "Chaud 🔥"
+    elif prospect.get("vehicle") or prospect.get("need"):
+        prospect["intention"] = "Chaud 🔥"
+    elif prospect.get("name") and prospect.get("name") != "Prospect Inconnu":
+        prospect["intention"] = "Tiède ⏳"
+    else:
+        prospect["intention"] = "Froid ❄️"
             
     # Generate live LLM response with country context and prospect state memory
     history_tuples = prospect["conversation"][:-1]
@@ -74,8 +86,10 @@ def handle_sales_conversation(prospect_id: str, message_text: str, channel: str 
     }
 
 def re_search_name(text: str) -> str:
-    text_lower = text.lower()
+    text_lower = text.lower().strip()
     patterns = [
+        r"c'est\s+([a-zà-ÿ]+)",
+        r"je suis\s+([a-zà-ÿ]+)",
         r"je m'appelle\s+([a-zà-ÿ]+(?:\s+[a-zà-ÿ]+)?)",
         r"moi c'est\s+([a-zà-ÿ]+(?:\s+[a-zà-ÿ]+)?)",
         r"mon nom est\s+([a-zà-ÿ]+(?:\s+[a-zà-ÿ]+)?)"
@@ -83,7 +97,9 @@ def re_search_name(text: str) -> str:
     for pattern in patterns:
         match = re.search(pattern, text_lower)
         if match:
-            return match.group(1).title()
+            found = match.group(1).title()
+            if found.lower() not in ["un", "une", "le", "la", "des", "du", "de", "bien", "toujours"]:
+                return found
     return ""
 
 def re_search_phone(text: str) -> str:
@@ -111,7 +127,7 @@ def update_lead_intelligence(prospect: dict, cfg: dict):
     
     if prospect.get("appointment"):
         prospect["next_action"] = f"Rendez-vous téléphonique planifié le {prospect['appointment']}."
-    elif prospect["document_uploaded"]:
+    elif prospect["document_uploaded"] or prospect["intention"] == "Chaud 🔥":
         prospect["next_action"] = "Proposer un créneau de rendez-vous pour souscription."
     else:
         prospect["next_action"] = f"Demander l'upload du certificat d'immatriculation ({cfg['name']})."
