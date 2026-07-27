@@ -52,6 +52,24 @@ def clean_natural_text(text: str) -> str:
         
     return cleaned
 
+def detect_language_mode(user_message: str) -> str:
+    """Detect whether user speaks French, Standard Arabic, or Maghrebi/Tunisian Derja."""
+    text = user_message.strip()
+    
+    # Check for Arabic Script
+    if re.search(r'[\u0600-\u06FF]', text):
+        return "ARABIC"
+        
+    text_lower = text.lower()
+    derja_keywords = [
+        "aychik", "aaffia", "afia", "marhaba", "chneyya", "bahi", "behi", "labes", "aslema",
+        "khouya", "shokran", "sahha", "yatik", "bch", "nحب", "kifech", "bchnekhou", "mrigal"
+    ]
+    if any(k in text_lower for k in derja_keywords):
+        return "DERJA"
+        
+    return "FRENCH"
+
 def search_knowledge_hub(query: str, country_code: str = "CI") -> str:
     """Search country-specific Knowledge Hub documents."""
     docs = KNOWLEDGE_DOCUMENTS_BY_COUNTRY.get(country_code, KNOWLEDGE_DOCUMENTS_BY_COUNTRY["CI"])
@@ -75,10 +93,11 @@ def search_knowledge_hub(query: str, country_code: str = "CI") -> str:
     return ""
 
 def generate_llm_response(conversation_history: list, user_message: str, country_code: str = "CI", prospect_data: dict = None) -> str:
-    """Generate rapid, zero-freeze conversational response with prospect state memory."""
+    """Generate rapid, zero-freeze conversational response with prospect state memory and strict language mirroring."""
     
     cfg = database.COUNTRY_CONFIGS.get(country_code, database.COUNTRY_CONFIGS["CI"])
     doc_context = search_knowledge_hub(user_message, country_code)
+    lang_mode = detect_language_mode(user_message)
     
     products_str = "\n".join([f"- {p['name']} : {p['desc']}" for p in cfg['products']])
     country_prep = "au" if country_code == "MA" else "en"
@@ -86,24 +105,25 @@ def generate_llm_response(conversation_history: list, user_message: str, country
     prospect_info = ""
     if prospect_data:
         if prospect_data.get("name") and prospect_data.get("name") != "Prospect Inconnu":
-            prospect_info += f"\n- Prénom prospect : {prospect_data.get('name')}"
+            prospect_info += f"\n- Nom/Prénom du prospect : {prospect_data.get('name')}"
         if prospect_data.get("document_uploaded"):
             prospect_info += f"\n- Carte grise analysée pour : {prospect_data.get('vehicle', 'Mercedes Série Spéciale')}. Devis calculé !"
         elif prospect_data.get("vehicle"):
             prospect_info += f"\n- Modèle véhicule : {prospect_data.get('vehicle')}"
 
     system_prompt = (
-        f"Tu es le Chargé de Clientèle Automobile SanlamAllianz {country_prep} {cfg['name']} ({cfg['entity']}).\n"
-        f"Tu dialogues naturellement sur WhatsApp et au téléphone avec votre prospect.\n\n"
-        f"DIRECTIVES RIGOUREUSES DE STYLE PARLÉ ET FLUIDE :\n"
-        f"1. Rédige un français naturel, fluide, chaleureux et direct. N'utilise AUCUN caractère spécial de mise en forme (PAS d'étoiles **, PAS de dièses #, PAS de parenthèses superflues).\n"
-        f"2. Si le prospect utilise du dialecte maghrébin/tunisien (ex: 'aychik', 'marhaba', 'bahi', 'labes', 'khouya', 'shokran'), réponds avec chaleur et courtoisie ('Marhaba ! Yatik el afia. C'est un grand plaisir...').\n"
-        f"3. Si le prénom du prospect est connu ({prospect_data.get('name', '') if prospect_data else ''}), utilise-le avec bienveillance.\n"
-        f"4. Présente les devis sous forme de phrases claires et agréables à lire et à entendre à voix haute.\n"
-        f"5. Termine toujours par 2 propositions de choix entre crochets simple `[Choix 1]` `[Choix 2]`.\n\n"
-        f"CONTEXTE OFFRES ET GARANTIES :\n"
+        f"Tu es le Chargé de Clientèle Automobile SanlamAllianz {country_prep} {cfg['name']} ({cfg['entity']}).\n\n"
+        f"RÈGLE ABSOLUE DE MIROIR LINGUISTIQUE (STRICT LANGUAGE MIRRORING) :\n"
+        f"1. Si le message de l'utilisateur est en FRANÇAIS -> Tu dois répondre 100% en FRANÇAIS naturel et fluide.\n"
+        f"2. Si le message est en ARABE LITTÉRAIRE (العربية الفصحى) -> Tu dois répondre 100% en ARABE LITTÉRAIRE (العربية الفصحى).\n"
+        f"3. Si le message est en DIALECTE TUNISIEN / MAGHRÉBIN (Derja) -> Tu dois répondre 100% en DIALECTE TUNISIEN / MAGHRÉBIN (اللهجة التونسية/المغاربية) fluide et chaleureux !\n\n"
+        f"RÈGLES DE STYLE :\n"
+        f"- N'utilise AUCUN caractère de mise en forme markdown (PAS d'étoiles **, PAS de dièses #, PAS de parenthèses répétitives).\n"
+        f"- Si le nom du prospect est connu ({prospect_data.get('name', '') if prospect_data else ''}), adresse-toi à lui naturellement.\n"
+        f"- Sois concis et accueillant (40 à 75 mots).\n"
+        f"- Termine toujours par 2 options d'action entre crochets simple `[Option 1]` `[Option 2]`.\n\n"
+        f"OFFRES ET CONTEXTE :\n"
         f"- Monnaie : {cfg['currency']}\n"
-        f"- Garages agréés : {cfg['default_garage']}\n"
         f"- Produits {cfg['entity']} :\n{products_str}\n"
         f"{prospect_info}\n"
     )
@@ -147,10 +167,10 @@ def generate_llm_response(conversation_history: list, user_message: str, country
             except Exception as e:
                 print(f"[LLM Core] Model {model_name} call exception ({e}). Trying next fallback...")
             
-    return clean_natural_text(generate_instant_rag_response(user_message, cfg, prospect_data))
+    return clean_natural_text(generate_instant_rag_response(user_message, cfg, prospect_data, lang_mode))
 
-def generate_instant_rag_response(user_message: str, cfg: dict, prospect_data: dict = None) -> str:
-    """Instant 0.01s Knowledge Engine tailored dynamically to the question and country context."""
+def generate_instant_rag_response(user_message: str, cfg: dict, prospect_data: dict = None, lang_mode: str = "FRENCH") -> str:
+    """Instant 0.01s Knowledge Engine with dynamic language mirroring."""
     msg = user_message.lower()
     country_code = cfg.get("code", "CI")
     country_prep = "au" if country_code == "MA" else "en"
@@ -160,17 +180,29 @@ def generate_instant_rag_response(user_message: str, cfg: dict, prospect_data: d
     doc_uploaded = prospect_data.get("document_uploaded", False) if prospect_data else False
     vehicle_str = prospect_data.get("vehicle", "votre véhicule") if prospect_data else "votre véhicule"
     name_str = prospect_data.get("name", "") if prospect_data else ""
-    greeting_name = f" {name_str}" if name_str and name_str != "Prospect Inconnu" else ""
-
-    # 1. Intent: Maghrebi / Tunisian Dialect Greeting & Courtesy
-    if any(k in msg for k in ["aychik", "aaffia", "afia", "marhaba", "chneyya", "bahi", "labes", "aslema", "khouya", "shokran", "sahha", "yatik"]):
+    
+    # 1. ARABIC LANGUAGE MODE (Standard Arabic Script)
+    if lang_mode == "ARABIC":
+        name_prefix = f" يا {name_str}" if name_str and name_str != "Prospect Inconnu" else ""
         return (
-            f"Marhaba{greeting_name} ! Yatik el afia. C'est un grand plaisir d'échanger avec vous.\n\n"
-            f"Je suis à votre entière disposition pour calculer le tarif idéal pour votre {vehicle_str} ou répondre à toutes vos questions.\n\n"
+            f"مرحباً بك{name_prefix} في **{cfg['entity']}** ! 🛡️\n"
+            f"يسعدنا جداً تقديم أفضل عروض تأمين السيارات المناسبة لسيارتك {vehicle_str}.\n"
+            f"نقدم لك ثلاث صيغ ممتازة: 1. التأمين الأساسي 2. التأمين المكتمل 3. التأمين الشامل للأخطار.\n\n"
+            f"[الحصول على العرض]  [حجز موعد]"
+        )
+
+    # 2. TUNISIAN / MAGHREBI DERJA MODE (Derja / Dialect)
+    if lang_mode == "DERJA":
+        name_prefix = f" يا {name_str}" if name_str and name_str != "Prospect Inconnu" else ""
+        return (
+            f"Marhaba bik{name_prefix} ! Yatik el afia. Aychak, rani m3ak bech n'awnek fi koll chay.\n"
+            f"Najjem n'essablek el tarif mte3 el karhabtek {vehicle_str} fi daqiqteyn fil formule li tnasbek.\n\n"
             f"[Obtenir mon devis]  [Prendre Rendez-vous]"
         )
 
-    # 2. Intent: Price / Devis / Tarif Calculation Request for all 3 formulas
+    # 3. FRENCH LANGUAGE MODE (Standard French)
+    greeting_name = f" {name_str}" if name_str and name_str != "Prospect Inconnu" else ""
+
     if any(k in msg for k in ["trois devis", "3 devis", "pour chaque formule", "combien ca coute", "combien ça me coûte", "prix pour chaque"]):
         if country_code == "CI":
             return (
@@ -200,32 +232,6 @@ def generate_instant_rag_response(user_message: str, cfg: dict, prospect_data: d
                 f"[Choisir Auto Zen Teranga]  [Choisir Tous Risques Avantage]"
             )
 
-    # 3. Intent: International Coverage across 27 countries
-    if any(k in msg for k in ["26", "28", "27", "étranger", "etranger", "couverture", "réseau", "reseau"]):
-        return (
-            f"Bonne nouvelle{greeting_name} ! Votre contrat {cfg['entity']} inclut la garantie Panafricaine. "
-            f"Vous êtes parfaitement couvert dans l'ensemble des 27 pays du réseau SanlamAllianz. "
-            f"En cas de déplacement, votre assistance reste active sans interruption.\n\n"
-            f"[Obtenir mon devis]  [Prendre RDV Conseiller]"
-        )
-
-    # 4. Intent: Explicit Relocation across countries
-    if any(k in msg for k in ["déménage", "demenage", "transfert de contrat", "changement de pays"]):
-        return (
-            f"En tant que premier groupe d'assurance Panafricain, {cfg['entity']} facilite votre mobilité. "
-            f"Votre contrat peut être transféré directement vers notre filiale locale sans aucune pénalité.\n\n"
-            f"[Valider le transfert pays]  [Garder mon contrat actuel]"
-        )
-
-    # 5. Intent: Competitor Switch
-    if any(k in msg for k in ["concurrent", "autre assureur", "actuellement assuré", "déjà assuré", "chez quelqu'un d'autre"]):
-        return (
-            f"Bienvenue chez {cfg['entity']} ! "
-            f"Nous gérons gratuitement la résiliation auprès de votre ancien assureur et nous reprenons 100% de votre bonus d'ancienneté.\n\n"
-            f"[Calculer mon tarif avec Bonus]  [Scanner ma Carte Grise]"
-        )
-
-    # 6. Intent: Single Price / Devis / Tarif Request
     if any(k in msg for k in ["prix", "tarif", "cout", "coût", "combien", "simulation", "devis", "estimation", "obtenir mon tarif"]):
         if doc_uploaded or (prospect_data and prospect_data.get("vehicle")):
             return (
@@ -243,7 +249,6 @@ def generate_instant_rag_response(user_message: str, cfg: dict, prospect_data: d
                 f"[Scanner ma Carte Grise]  [Prendre RDV Conseiller]"
             )
 
-    # Default Dynamic Orientation Response
     return (
         f"Chez {cfg['entity']} {country_prep} {cfg['name']}, nous proposons 3 niveaux de protection :\n"
         f"1. {p1['name']} : la couverture essentielle.\n"

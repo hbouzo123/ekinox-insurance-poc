@@ -1,11 +1,13 @@
 from core import database, nlp
 import re
 
-STOP_WORDS = {
+FRENCH_STOP_WORDS = {
     "avec", "et", "en", "de", "du", "des", "le", "la", "les", "un", "une",
     "pour", "sur", "dans", "par", "pas", "oui", "non", "ici", "bien", "toujours",
     "voiture", "auto", "devis", "tarif", "prix", "bonjour", "salut", "quand", "quel",
-    "quelque", "chose", "merci", "voilà", "voila", "c'est", "fait"
+    "quelle", "quelques", "chose", "merci", "voilà", "voila", "c'est", "fait", "est",
+    "suis", "sommes", "êtes", "sont", "nous", "vous", "ils", "elles", "mon", "ma", "mes",
+    "ton", "ta", "tes", "son", "sa", "ses", "notre", "votre", "leur", "ce", "cette", "ces"
 }
 
 def handle_sales_conversation(prospect_id: str, message_text: str, channel: str = "WhatsApp") -> dict:
@@ -40,8 +42,8 @@ def handle_sales_conversation(prospect_id: str, message_text: str, channel: str 
     
     msg_lower = message_text.lower()
     
-    # 1. Advanced Name Extraction (e.g. "Heithem", "je suis Heithem", "moi c'est Heithem", "c'est Heithem")
-    name_found = re_search_name(message_text)
+    # 1. 100% Dynamic Name Extraction (any first name / surname, 0 hardcoded values)
+    name_found = extract_dynamic_name(message_text)
     if name_found and prospect["name"] == "Prospect Inconnu":
         prospect["name"] = name_found
         
@@ -79,7 +81,7 @@ def handle_sales_conversation(prospect_id: str, message_text: str, channel: str 
     else:
         prospect["intention"] = "Froid ❄️"
             
-    # Generate live LLM response with country context and prospect state memory
+    # Generate live LLM response with language mirroring and prospect state memory
     history_tuples = prospect["conversation"][:-1]
     assistant_reply = nlp.generate_llm_response(history_tuples, message_text, country_code=country_code, prospect_data=prospect)
     
@@ -92,26 +94,28 @@ def handle_sales_conversation(prospect_id: str, message_text: str, channel: str 
         "prospect_state": prospect
     }
 
-def re_search_name(text: str) -> str:
+def extract_dynamic_name(text: str) -> str:
+    """Dynamically extract any first name or surname without hardcoded names."""
     text_clean = text.strip()
     
-    # Check for direct single/double word name input (e.g. "Heithem" or "Heithem Boussoffara")
-    words = [w for w in re.findall(r'\b[A-ZÀ-Ÿa-zà-ÿ]{3,15}\b', text_clean) if w.lower() not in STOP_WORDS]
-    
-    # Explicit pattern matches
+    # 1. Look for explicit name patterns
     patterns = [
-        r"(?:je suis|moi c'est|je m'appelle|mon prénom est|c'est)\s+([a-zà-ÿ]{3,15}(?:\s+[a-zà-ÿ]{3,15})?)",
-        r"\b(heithem|karim|youssef|jean|awa|moustapha|bakary|omar|ousmane)\b"
+        r"(?:je m'appelle|moi c'est|mon nom est|mon prénom est|je suis|c'est)\s+([a-zà-ÿA-ZÀ-Ÿ]{2,20}(?:\s+[a-zà-ÿA-ZÀ-Ÿ]{2,20})?)",
+        r"\b([A-ZÀ-Z][a-zà-ÿ]{2,15}(?:\s+[A-ZÀ-Z][a-zà-ÿ]{2,15})?)\b"
     ]
     
     for pattern in patterns:
-        match = re.search(pattern, text_clean, re.IGNORECASE)
+        match = re.search(pattern, text_clean)
         if match:
-            found = match.group(1).title()
-            if found.lower() not in STOP_WORDS:
-                return found
+            candidate = match.group(1).strip().title()
+            candidate_words = candidate.lower().split()
+            # Verify candidate is not composed of stop words
+            if not any(w in FRENCH_STOP_WORDS for w in candidate_words) and len(candidate) >= 3:
+                return candidate
                 
-    if len(words) == 1 and words[0].lower() not in STOP_WORDS:
+    # 2. If single capitalized word is passed (e.g., "Heithem" or "Boussoffara")
+    words = [w for w in re.findall(r'\b[a-zà-ÿA-ZÀ-Ÿ]{3,20}\b', text_clean) if w.lower() not in FRENCH_STOP_WORDS]
+    if len(words) == 1:
         return words[0].title()
         
     return ""
