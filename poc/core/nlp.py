@@ -71,19 +71,18 @@ def generate_llm_response(conversation_history: list, user_message: str, country
 
     system_prompt = (
         f"Tu es le Chargé de Clientèle Automobile SanlamAllianz {country_prep} {cfg['name']} ({cfg['entity']}).\n"
-        f"Tu dialogues en direct. Sois ultra-rapide, naturel, dynamique et concis (50 à 90 mots max).\n\n"
+        f"Tu dialogues de vive voix lors d'un appel téléphonique. Sois chaleureux, naturel, vivant et exprime-toi avec des phrases COMPLÈTES et fluides (40 à 75 mots max).\n\n"
         f"CONTEXTE ASSUREUR LOCAL :\n"
         f"- Réglementation : {cfg['regulatory_body']}\n"
         f"- Monnaie : {cfg['currency']}\n"
         f"- Garages agréés : {cfg['default_garage']}\n"
         f"- Produits chez {cfg['entity']} :\n{products_str}\n"
         f"{prospect_info}\n\n"
-        f"RÈGLES STRICTES DE CONVERSATION HUMAINE :\n"
-        f"1. Adapte ta réponse de façon vivante et naturelle à la question exacte du prospect.\n"
-        f"2. Ne répète JAMAIS la même liste de 3 formules si le client te demande d'expliciter, de reformuler ou de lui conseiller une offre.\n"
-        f"3. Si le client achète une nouvelle voiture, félicite-le et recommande-lui la formule Tous Risques ({cfg['products'][2]['name']}).\n"
-        f"4. Si le client veut une reformulation, résume les 3 niveaux de garantie en phrases simples.\n"
-        f"5. Termine toujours par 2 choix pertinents entre crochets `[Choix 1]` `[Choix 2]`.\n"
+        f"RÈGLES DE DIALOGUE CONTINU :\n"
+        f"1. Ne coupe JAMAIS tes phrases au milieu. Termine toujours ta pensée.\n"
+        f"2. Si le client achète une voiture neuve ou hésite, explique chaleureusement pourquoi la formule Tous Risques ({cfg['products'][2]['name']}) est indispensable pour protéger son investissement neuf.\n"
+        f"3. Reste dynamique, réponds à ses objections ('touriste' / tous risques) avec humour et sympathie.\n"
+        f"4. Termine toujours par 2 choix entre crochets `[Choix 1]` `[Choix 2]`.\n"
     )
     
     if doc_context:
@@ -98,28 +97,32 @@ def generate_llm_response(conversation_history: list, user_message: str, country
         
     messages.append({"role": "user", "content": user_message})
     
-    # Try Fast Cloud LLM call with 3.5s timeout for real-time voice latency
+    # Try Fast Cloud LLM call with 6.0s timeout and 300 token limit to guarantee complete, untruncated sentences
     if config.OLLAMA_API_KEY:
-        try:
-            url = config.OLLAMA_API_URL
-            payload = {
-                "model": config.DEFAULT_MODEL,
-                "messages": messages,
-                "stream": False,
-                "options": {"num_predict": 180, "temperature": 0.4}
-            }
-            data = json.dumps(payload).encode('utf-8')
-            req = urllib.request.Request(url, data=data, headers={
-                "Authorization": f"Bearer {config.OLLAMA_API_KEY}",
-                "Content-Type": "application/json"
-            })
-            resp = urllib.request.urlopen(req, timeout=3.5)
-            result = json.loads(resp.read().decode('utf-8'))
-            reply = result["message"]["content"].strip()
-            if reply:
-                return reply
-        except Exception as e:
-            print(f"[LLM Core] Fast Cloud LLM timeout ({e}). Switching to instant local RAG engine...")
+        for model_name in [config.DEFAULT_MODEL, config.FALLBACK_MODEL]:
+            try:
+                url = config.OLLAMA_API_URL
+                payload = {
+                    "model": model_name,
+                    "messages": messages,
+                    "stream": False,
+                    "options": {
+                        "num_predict": 300,
+                        "temperature": 0.5
+                    }
+                }
+                data = json.dumps(payload).encode('utf-8')
+                req = urllib.request.Request(url, data=data, headers={
+                    "Authorization": f"Bearer {config.OLLAMA_API_KEY}",
+                    "Content-Type": "application/json"
+                })
+                resp = urllib.request.urlopen(req, timeout=6.0)
+                result = json.loads(resp.read().decode('utf-8'))
+                reply = result.get("message", {}).get("content", "").strip()
+                if reply and len(reply) > 15:
+                    return reply
+            except Exception as e:
+                print(f"[LLM Core] Model {model_name} call exception ({e}). Trying next fallback...")
             
     return generate_instant_rag_response(user_message, cfg, prospect_data)
 
@@ -134,12 +137,12 @@ def generate_instant_rag_response(user_message: str, cfg: dict, prospect_data: d
     doc_uploaded = prospect_data.get("document_uploaded", False) if prospect_data else False
     vehicle_str = prospect_data.get("vehicle", "votre véhicule") if prospect_data else "votre véhicule"
 
-    # 1. Intent: Recommendation for New / Upcoming Vehicle ("nouvelle", "neuve", "sortir la semaine prochaine", "conseille", "recommande", "acheter")
-    if any(k in msg for k in ["nouvelle", "neuf", "neuve", "semaine prochaine", "quelle formule me", "conseille", "recommande", "acheter"]):
+    # 1. Intent: Recommendation for New / Upcoming Vehicle ("nouvelle", "neuve", "sortir la semaine prochaine", "conseille", "recommande", "touriste", "pourquoi")
+    if any(k in msg for k in ["nouvelle", "neuf", "neuve", "semaine prochaine", "conseille", "recommande", "pourquoi", "touriste"]):
         return (
-            f"Félicitations pour votre nouveau véhicule ! 🚘\n\n"
-            f"Pour une voiture neuve, nous vous recommandons vivement notre formule Tous Risques (**{p3['name']}**).\n"
-            f"Elle offre la garantie valeur à neuf, la couverture de tous les dommages et l'assistance 0 km.\n\n"
+            f"Félicitations pour votre nouvelle voiture ! 🚘\n\n"
+            f"Pour un véhicule neuf, je vous recommande vivement notre formule Tous Risques (**{p3['name']}**).\n"
+            f"Pourquoi ? Parce qu'une voiture neuve est un investissement majeur : en cas de collision, de vol ou de vandalisme, vous êtes intégralement indemnisé à la valeur à neuf sans mauvaise surprise !\n\n"
             f"Souhaitez-vous calculer votre tarif personnalisé ?\n\n"
             f"[📊 Obtenir mon tarif personnalisé]  [Découvrir {p2['name']}]"
         )
@@ -174,23 +177,12 @@ def generate_instant_rag_response(user_message: str, cfg: dict, prospect_data: d
                 f"[📄 Scanner ma Carte Grise]  [🗓️ Prendre RDV Conseiller]"
             )
 
-    # 4. Intent: Difference / Comparison between formulas
-    if any(k in msg for k in ["difference", "différence", "comparer", "les 3", "mieux"]):
-        return (
-            f"Voici la comparaison des 3 formules chez {cfg['entity']} :\n"
-            f"• **{p1['name']}** : Assurance Tiers de base.\n"
-            f"• **{p2['name']}** : Protection Tiers + Vol + Incendie + Vitres.\n"
-            f"• **{p3['name']}** : Protection Tous Risques intégrale.\n\n"
-            f"Souhaitez-vous une simulation personnalisée ?\n\n"
-            f"[📊 Obtenir mon tarif personnalisé]  [Découvrir {p3['name']}]"
-        )
-
     # Default Dynamic Orientation Response
     return (
         f"Chez **{cfg['entity']}** {country_prep} {cfg['name']}, nous proposons 3 niveaux de protection :\n"
-        f"1️⃣ **{p1['name']}**\n"
-        f"2️⃣ **{p2['name']}**\n"
-        f"3️⃣ **{p3['name']}**\n\n"
+        f"1️⃣ **{p1['name']}** (Tiers)\n"
+        f"2️⃣ **{p2['name']}** (Tiers Amélioré)\n"
+        f"3️⃣ **{p3['name']}** (Tous Risques)\n\n"
         f"Quelle formule souhaitez-vous découvrir ?\n\n"
         f"[{p1['name']}]  [{p3['name']}]  [📊 Obtenir mon tarif personnalisé]"
     )

@@ -15,9 +15,9 @@ PORT = int(os.getenv("PORT", "8000"))
 OLLAMA_API_KEY = os.getenv("OLLAMA_API_KEY", "a45e8655957b4c69bc4fa758b8633a52.JfC42-bHH4zqIdhtPwdk6puU")
 OLLAMA_API_URL = os.getenv("OLLAMA_API_URL", "https://ollama.com/api/chat")
 
-# Models selection (Fast, high quality conversational LLMs)
-DEFAULT_MODEL = os.getenv("DEFAULT_MODEL", "deepseek-v4-flash")
-FALLBACK_MODEL = os.getenv("FALLBACK_MODEL", "gemma4:31b")
+# Optimized Models for French Conversational Fluidity (Fast, complete, zero truncation)
+DEFAULT_MODEL = os.getenv("DEFAULT_MODEL", "qwen2.5:7b")
+FALLBACK_MODEL = os.getenv("FALLBACK_MODEL", "deepseek-v4-flash")
 
 USE_MOCK_AI = False if OLLAMA_API_KEY else True
 
