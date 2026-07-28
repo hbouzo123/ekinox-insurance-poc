@@ -3,22 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Digital Sales - SanlamAllianz Full-Duplex Continuous Voice Agent</title>
+    <title>Digital Sales Platform - SanlamAllianz</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: #0075C9; /* Sanlam Lochmara Blue */
             --primary-dark: #003781; /* Resolution / Allianz Blue */
-            --primary-glow: rgba(0, 117, 201, 0.35);
             --secondary: #00A3E0; /* Sanlam Cyan Accent */
             --bg-dark: #0b132b;
             --card-bg: rgba(15, 23, 42, 0.7);
             --text-light: #f8fafc;
             --text-muted: #94a3b8;
             --border: rgba(255, 255, 255, 0.1);
-            --wa-bg: #efeae2;
-            --danger: #ef4444;
-            --success: #10b981;
+            --wa-bg: #e5ddd5;
+            --wa-header: #075e54;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -30,7 +28,7 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            background-image: radial-gradient(circle at 10% 20%, rgba(0, 117, 201, 0.15) 0%, transparent 40%);
+            background-image: radial-gradient(circle at 10% 20%, rgba(0, 117, 201, 0.12) 0%, transparent 40%);
         }
 
         header.site-header {
@@ -44,109 +42,116 @@
         }
 
         .logo-container { display: flex; align-items: center; text-decoration: none; }
-
         .header-actions { display: flex; align-items: center; gap: 1rem; }
+
+        .btn-start-call {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 0.55rem 1.1rem;
+            border-radius: 2rem;
+            font-weight: 700;
+            font-size: 0.85rem;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.35);
+            transition: all 0.2s ease;
+        }
+
+        .btn-start-call:hover { transform: translateY(-1px); box-shadow: 0 0 20px rgba(16, 185, 129, 0.5); }
 
         .ux-variant-toggle {
             display: flex;
-            background: rgba(255,255,255,0.03);
+            background: rgba(255, 255, 255, 0.05);
             border: 1px solid var(--border);
-            padding: 0.2rem;
-            border-radius: 1.5rem;
+            padding: 0.25rem;
+            border-radius: 2rem;
         }
 
         .ux-btn {
             background: transparent;
             border: none;
             color: var(--text-muted);
-            padding: 0.35rem 0.8rem;
-            font-size: 0.78rem;
-            font-weight: 600;
-            border-radius: 1rem;
-            cursor: pointer;
-            font-family: inherit;
-        }
-
-        .ux-btn.active {
-            background: var(--primary);
-            color: white;
-        }
-
-        .btn-start-call {
-            background: linear-gradient(135deg, #10b981, #059669);
-            color: white;
-            border: none;
-            padding: 0.45rem 1.1rem;
+            padding: 0.4rem 0.9rem;
             border-radius: 1.5rem;
-            font-weight: 700;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
+            font-weight: 600;
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
             transition: all 0.2s ease;
         }
 
-        .btn-start-call:hover {
-            transform: scale(1.03);
-            box-shadow: 0 0 20px rgba(16, 185, 129, 0.6);
-        }
+        .ux-btn.active { background: var(--primary); color: white; }
 
         .channel-picker {
             display: flex;
             align-items: center;
-            gap: 0.6rem;
-            background: rgba(255,255,255,0.03);
+            gap: 0.5rem;
+            background: rgba(255, 255, 255, 0.05);
             border: 1px solid var(--border);
-            padding: 0.4rem 1rem;
+            padding: 0.4rem 0.9rem;
             border-radius: 2rem;
         }
 
-        .channel-picker label { font-size: 0.82rem; color: var(--text-muted); font-weight: 600; }
-        .channel-select { background: transparent; border: none; color: var(--secondary); font-weight: 700; outline: none; cursor: pointer; font-family: inherit; font-size:0.85rem; }
+        .channel-picker label { font-size: 0.8rem; color: var(--text-muted); font-weight: 600; }
+
+        .channel-select {
+            background: transparent;
+            border: none;
+            color: var(--secondary);
+            font-weight: 700;
+            font-size: 0.85rem;
+            outline: none;
+            cursor: pointer;
+        }
 
         .container {
-            display: flex;
             flex: 1;
-            padding: 1.5rem 2rem;
             max-width: 1400px;
             width: 100%;
             margin: 0 auto;
+            padding: 1.5rem 2rem;
+            display: flex;
             gap: 2rem;
-            height: calc(100vh - 75px);
         }
 
-        .simulator-panel { flex: 1.2; display: flex; justify-content: center; align-items: center; }
+        .simulator-panel {
+            flex: 1.2;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
 
         .phone-wrapper {
-            width: 380px;
-            height: 630px;
-            background: #1e1e1e;
-            border: 12px solid #333;
+            width: 100%;
+            max-width: 420px;
+            height: 690px;
+            background: #111;
             border-radius: 2.5rem;
+            border: 8px solid #222;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.8);
             position: relative;
         }
 
         .phone-notch {
-            width: 150px;
-            height: 22px;
-            background: #333;
+            width: 130px;
+            height: 18px;
+            background: #222;
+            margin: 0 auto;
+            border-bottom-left-radius: 0.8rem;
+            border-bottom-right-radius: 0.8rem;
             position: absolute;
-            top: 0;
-            left: 50%;
+            top: 0; left: 50%;
             transform: translateX(-50%);
-            border-bottom-left-radius: 1rem;
-            border-bottom-right-radius: 1rem;
             z-index: 10;
         }
 
         .wa-header {
-            background: #003781;
+            background: #075e54;
             padding: 1.8rem 1.2rem 0.8rem 1.2rem;
             display: flex;
             align-items: center;
@@ -600,7 +605,7 @@ Que souhaitez-vous faire ?
             recognition.interimResults = true;
 
             recognition.onresult = function(event) {
-                if (isProcessing || !isCallActive) return;
+                if (isProcessing || !isCallActive || (synth && synth.speaking)) return;
                 
                 let transcript = '';
                 for (let i = event.resultIndex; i < event.results.length; ++i) {
@@ -614,7 +619,7 @@ Que souhaitez-vous faire ?
 
                 if (silenceDebounceTimer) clearTimeout(silenceDebounceTimer);
                 
-                // 2200ms silence debounce delay to allow natural speech pauses on cloud Render
+                // 2200ms silence debounce delay to allow natural speech pauses
                 silenceDebounceTimer = setTimeout(async () => {
                     if (!isProcessing && isCallActive && currentVoiceBuffer.trim().length > 0) {
                         isProcessing = true;
@@ -637,23 +642,20 @@ Que souhaitez-vous faire ?
                     document.getElementById("call-transcript-box").innerHTML = "<strong>⚠️ Accès au microphone refusé.</strong><br>Veuillez autoriser le microphone dans la barre d'adresse du navigateur (icône 🔒).";
                     return;
                 }
-                if (isCallActive && !isMuted && synth && !synth.speaking) {
-                    isProcessing = false;
+                if (isCallActive && !isMuted && !isProcessing && synth && !synth.speaking) {
                     setTimeout(restartListeningLoop, 400);
                 }
             };
 
             recognition.onend = function() {
-                if (isCallActive && !isMuted && synth && !synth.speaking) {
-                    isProcessing = false;
+                if (isCallActive && !isMuted && !isProcessing && synth && !synth.speaking) {
                     setTimeout(restartListeningLoop, 400);
                 }
             };
         }
 
         function restartListeningLoop() {
-            if (!isCallActive || isMuted || (synth && synth.speaking)) return;
-            isProcessing = false;
+            if (!isCallActive || isMuted || isProcessing || (synth && synth.speaking)) return;
             document.getElementById("call-status-text").innerText = "Le conseiller écoute... 🎙️";
             document.getElementById("call-avatar-ring").className = "voice-call-avatar-ring listening";
             try { recognition.start(); } catch(e){}
@@ -684,7 +686,7 @@ Que souhaitez-vous faire ?
 
             isCallActive = true;
             isMuted = false;
-            isProcessing = false;
+            isProcessing = true;
             callSeconds = 0;
 
             document.getElementById("voice-call-modal").style.display = "flex";
@@ -738,6 +740,10 @@ Que souhaitez-vous faire ?
         function speakText(text) {
             if (!synth) { isProcessing = false; restartListeningLoop(); return; }
             
+            // STRICT MUTEX: STOP RECOGNITION BEFORE TTS PLAYS TO PREVENT CHROME AUDIO CUTOFF
+            isProcessing = true;
+            if (recognition) try { recognition.stop(); } catch(e){}
+            
             synth.cancel();
             if (ttsSafetyTimer) clearTimeout(ttsSafetyTimer);
 
@@ -776,6 +782,10 @@ Que souhaitez-vous faire ?
                 let currentSentence = sentences[sentenceIndex];
                 sentenceIndex++;
 
+                // Ensure recognition is stopped and AudioContext is active
+                if (recognition) try { recognition.stop(); } catch(e){}
+                try { if (synth.paused) synth.resume(); } catch(e){}
+
                 const utterance = new SpeechSynthesisUtterance(currentSentence);
                 
                 if (/[\u0600-\u06FF]/.test(currentSentence)) {
@@ -803,7 +813,7 @@ Que souhaitez-vous faire ?
             }
 
             // Global safety timeout
-            const fallbackDelay = Math.max(4000, Math.min(12000, cleanText.length * 70));
+            const fallbackDelay = Math.max(4000, Math.min(15000, cleanText.length * 80));
             ttsSafetyTimer = setTimeout(() => {
                 console.warn("[TTS Safety Net] Overall fallback timeout triggered.");
                 synth.cancel();
