@@ -59,29 +59,29 @@ def handle_sales_conversation(prospect_id: str, message_text: str, channel: str 
         if vehicle_match:
             prospect["vehicle"] = vehicle_match.group(0).title()
         elif prospect.get("document_uploaded"):
-            prospect["vehicle"] = "Mercedes Série Spéciale (CI-5099-AB2)"
+            prospect["vehicle"] = "Toyota Corolla (RB-1234-AB)" if country_code == "BJ" else "Mercedes Série Spéciale"
             
-    # 3. Trigger ORASS Policy Issuance (new-deal) if prospect requests subscription
-    if any(k in msg_lower for k in ["souscrire", "émettre", "emettre", "valider la police", "confirmer la souscription"]):
+    # 3. Trigger ORASS Policy Issuance (new-deal) ONLY IF COUNTRY IS BENIN (BJ)
+    if country_code == "BJ" and any(k in msg_lower for k in ["souscrire", "émettre", "emettre", "valider la police", "confirmer la souscription"]):
         if not prospect.get("orass_policy_num"):
-            v_name = prospect.get("vehicle") or "Peugeot 208"
+            v_name = prospect.get("vehicle") or "Toyota Corolla"
             v_parts = v_name.split()
-            marque = v_parts[0] if v_parts else "Peugeot"
-            modele = " ".join(v_parts[1:]) if len(v_parts) > 1 else "Auto"
+            marque = v_parts[0] if v_parts else "Toyota"
+            modele = " ".join(v_parts[1:]) if len(v_parts) > 1 else "Corolla"
             
-            p_name = prospect.get("name") or "Karim"
+            p_name = prospect.get("name") or "Koffi"
             p_parts = p_name.split()
             nom_assure = p_parts[0] if p_parts else "Prospect"
-            prenom_assure = p_parts[-1] if len(p_parts) > 1 else "Client"
+            prenom_assure = p_parts[-1] if len(p_parts) > 1 else "Dossou"
             
             orass_deal = orass_client.orass_engine.validate_new_deal_auto(
                 assure_nom=nom_assure,
                 assure_prenom=prenom_assure,
                 marque=marque,
                 modele=modele,
-                immatriculation="CI-5099-AB2"
+                immatriculation="RB-1234-AB"
             )
-            prospect["orass_policy_num"] = orass_deal.get("numepoli", "POL-AUTO-894102")
+            prospect["orass_policy_num"] = orass_deal.get("numepoli", "POL-AUTO-BENIN-894102")
             prospect["intention"] = "Chaud 🔥"
 
     # 4. Match country-specific product catalog
@@ -110,7 +110,7 @@ def handle_sales_conversation(prospect_id: str, message_text: str, channel: str 
     history_tuples = prospect["conversation"][:-1]
     assistant_reply = nlp.generate_llm_response(history_tuples, message_text, country_code=country_code, prospect_data=prospect)
     
-    if prospect.get("orass_policy_num") and "POL-AUTO" not in assistant_reply:
+    if country_code == "BJ" and prospect.get("orass_policy_num") and "POL-AUTO" not in assistant_reply:
         assistant_reply += f"\n\n🎉 Félicitations ! Votre Police d'Assurance ORASS Officielle a été émise : N° {prospect['orass_policy_num']}."
         
     prospect["conversation"].append({"sender": "assistant", "text": assistant_reply})
@@ -176,6 +176,7 @@ def update_lead_intelligence(prospect: dict, cfg: dict):
     elif prospect.get("appointment"):
         prospect["next_action"] = f"Rendez-vous téléphonique planifié le {prospect['appointment']}."
     elif prospect["document_uploaded"] or prospect["intention"] == "Chaud 🔥":
-        prospect["next_action"] = "Émettre la Police Auto ORASS ou proposer un rendez-vous."
+        action_str = "Émettre la Police Auto ORASS ou proposer un rendez-vous." if cfg['code'] == "BJ" else "Proposer un rendez-vous pour souscription."
+        prospect["next_action"] = action_str
     else:
         prospect["next_action"] = f"Demander l'upload du certificat d'immatriculation ({cfg['name']})."

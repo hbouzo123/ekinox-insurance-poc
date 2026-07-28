@@ -161,7 +161,7 @@
         </div>
 
         <div class="workspace-header">
-            <h3 class="workspace-title">Base Prospects & Qualification Pipeline (Interconnecté Sandbox ORASS)</h3>
+            <h3 class="workspace-title">Base Prospects & Qualification Pipeline (Exclusivité Sandbox ORASS Bénin 🇧🇯)</h3>
         </div>
 
         <div class="table-container">
@@ -211,7 +211,7 @@
                         
                     const orassBadge = p.orass_policy_num
                         ? `<span class="badge badge-orass">📜 Police ${p.orass_policy_num}</span>`
-                        : `<span class="badge badge-nodoc">Simulation Quittance</span>`;
+                        : (p.country === 'BJ' ? `<span class="badge badge-doc" style="background:rgba(0,163,224,0.15); color:#38bdf8;">Simulation ORASS BJ</span>` : `<span class="badge badge-nodoc">Tarif Standard</span>`);
 
                     tr.innerHTML = `
                         <td>

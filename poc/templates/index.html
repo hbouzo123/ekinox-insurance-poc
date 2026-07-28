@@ -157,6 +157,7 @@
         <div class="country-selector">
             <span style="font-size:0.9rem; color:var(--text-muted);">Contexte Pays :</span>
             <select id="country-select" onchange="switchCountry()">
+                <option value="BJ" {{ 'selected' if country.code == 'BJ' else '' }}>🇧🇯 Bénin (FCFA / SanlamAllianz Bénin - Sandbox ORASS)</option>
                 <option value="CI" {{ 'selected' if country.code == 'CI' else '' }}>🇨🇮 Côte d'Ivoire (FCFA / SanlamAllianz CI)</option>
                 <option value="MA" {{ 'selected' if country.code == 'MA' else '' }}>🇲🇦 Maroc (MAD / Sanlam Maroc)</option>
                 <option value="SN" {{ 'selected' if country.code == 'SN' else '' }}>🇸🇳 Sénégal (FCFA / SanlamAllianz SN)</option>
@@ -171,6 +172,9 @@
             <div class="country-badge-bar">
                 <span>{{ country.flag }} Réglementation : <strong>{{ country.regulatory_body }}</strong></span>
                 <span>| Monnaie : <strong>{{ country.currency }}</strong></span>
+                {% if country.code == 'BJ' %}
+                <span>| ⚡ <strong>Sandbox ORASS Actif</strong></span>
+                {% endif %}
             </div>
         </div>
 

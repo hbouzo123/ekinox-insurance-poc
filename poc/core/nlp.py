@@ -5,6 +5,14 @@ import re
 from core import config, database, orass_client
 
 KNOWLEDGE_DOCUMENTS_BY_COUNTRY = {
+    "BJ": [
+        {
+            "id": "doc-bj-1",
+            "title": "Code CIMA & Réglementation ARCA SanlamAllianz Bénin",
+            "content": "Conformément au Code CIMA Bénin (Article 13), l'assurance Responsabilité Civile automobile est obligatoire. Interconnexion directe avec le Core Insurance System ORASS Sandbox Bénin. Formule Auto Platinum Tous Risques avec franchise Cotonou 45 000 FCFA.",
+            "category": "garantie"
+        }
+    ],
     "CI": [
         {
             "id": "doc-ci-1",
@@ -64,9 +72,9 @@ def detect_language_mode(user_message: str) -> str:
         
     return "FRENCH"
 
-def search_knowledge_hub(query: str, country_code: str = "CI") -> str:
+def search_knowledge_hub(query: str, country_code: str = "BJ") -> str:
     """Search country-specific Knowledge Hub documents."""
-    docs = KNOWLEDGE_DOCUMENTS_BY_COUNTRY.get(country_code, KNOWLEDGE_DOCUMENTS_BY_COUNTRY["CI"])
+    docs = KNOWLEDGE_DOCUMENTS_BY_COUNTRY.get(country_code, KNOWLEDGE_DOCUMENTS_BY_COUNTRY["BJ"])
     query_clean = query.lower()
     keywords = re.findall(r'\b\w{4,}\b', query_clean)
     if not keywords:
@@ -86,10 +94,10 @@ def search_knowledge_hub(query: str, country_code: str = "CI") -> str:
         return f"Information officielle : {best_doc['content']}"
     return ""
 
-def generate_llm_response(conversation_history: list, user_message: str, country_code: str = "CI", prospect_data: dict = None) -> str:
-    """Generate ultra-rapid response with live ORASS Core Insurance System integration."""
+def generate_llm_response(conversation_history: list, user_message: str, country_code: str = "BJ", prospect_data: dict = None) -> str:
+    """Generate ultra-rapid response with live ORASS Core Insurance System integration EXCLUSIVELY for Benin."""
     
-    cfg = database.COUNTRY_CONFIGS.get(country_code, database.COUNTRY_CONFIGS["CI"])
+    cfg = database.COUNTRY_CONFIGS.get(country_code, database.COUNTRY_CONFIGS["BJ"])
     lang_mode = detect_language_mode(user_message)
     
     prospect_info = ""
@@ -97,18 +105,21 @@ def generate_llm_response(conversation_history: list, user_message: str, country
         if prospect_data.get("name") and prospect_data.get("name") != "Prospect Inconnu":
             prospect_info += f"\n- Nom du prospect : {prospect_data.get('name')}"
         if prospect_data.get("document_uploaded"):
-            prospect_info += f"\n- Carte grise analysée pour : {prospect_data.get('vehicle', 'Mercedes Série Spéciale')}. Devis calculé via ORASS !"
+            prospect_info += f"\n- Carte grise analysée pour : {prospect_data.get('vehicle', 'Toyota Corolla')}"
+            if country_code == "BJ":
+                prospect_info += ". Devis calculé via le Sandbox ORASS Bénin !"
         elif prospect_data.get("vehicle"):
             prospect_info += f"\n- Véhicule : {prospect_data.get('vehicle')}"
 
     system_prompt = (
-        f"Tu es le Conseiller Commercial SanlamAllianz {cfg['name']}.\n"
-        f"Tu es connecté en temps réel au Core Insurance System ORASS.\n"
-        f"Réponds directement au prospect de manière ultra-fluide et précise.\n"
+        f"Tu es le Conseiller Commercial {cfg['entity']} au {cfg['name']}.\n"
+        f"Tu aides les prospects à trouver l'assurance automobile idéale.\n"
         f"N'utilise AUCUN caractère markdown (** ou #).\n"
         f"{prospect_info}\n"
     )
-    
+    if country_code == "BJ":
+        system_prompt += "Tu es interconnecté en temps réel au Sandbox ORASS Bénin pour fournir les quittances CIMA officielles.\n"
+        
     messages = [{"role": "system", "content": system_prompt}]
     for msg in conversation_history[-4:]:
         role = "assistant" if msg["sender"] == "assistant" else "user"
@@ -144,47 +155,47 @@ def generate_llm_response(conversation_history: list, user_message: str, country
     return clean_natural_text(generate_instant_rag_response(user_message, cfg, prospect_data, lang_mode))
 
 def generate_instant_rag_response(user_message: str, cfg: dict, prospect_data: dict = None, lang_mode: str = "FRENCH") -> str:
-    """Instant 0.001s Knowledge Engine powered by ORASS Core Insurance System Sandbox."""
+    """Instant 0.001s Knowledge Engine. ORASS Sandbox is restricted ONLY to Benin (BJ)."""
     msg = user_message.lower()
-    country_code = cfg.get("code", "CI")
-    country_prep = "au" if country_code == "MA" else "en"
+    country_code = cfg.get("code", "BJ")
+    country_prep = "au" if country_code in ["MA", "BJ"] else "en"
     products = cfg["products"]
     p1, p2, p3 = products[0], products[1], products[2]
     
-    doc_uploaded = prospect_data.get("document_uploaded", False) if prospect_data else False
     vehicle_str = prospect_data.get("vehicle", "votre véhicule") if prospect_data else "votre véhicule"
     name_str = prospect_data.get("name", "") if prospect_data else ""
     greeting_name = f" {name_str}" if name_str and name_str != "Prospect Inconnu" else ""
     
-    # Execute ORASS Sandbox Devis Engine for live quittance calculations
-    orass_quote = orass_client.orass_engine.calculate_devis_auto(
-        code_cate="101",
-        puifisc=7,
-        codedure="12",
-        bonumalu=80.0,
-        garanties=["VOL", "INCENDIE", "BRIS_GLACE"]
-    )
-    detail = orass_quote["detail"]
-    quit_info = orass_quote["quittance"]
+    # Execute ORASS Sandbox Devis Engine ONLY IF COUNTRY IS BENIN (BJ)
+    is_benin = (country_code == "BJ")
+    orass_quote = None
+    if is_benin:
+        orass_quote = orass_client.orass_engine.calculate_devis_auto(
+            code_cate="101",
+            puifisc=7,
+            codedure="12",
+            bonumalu=80.0,
+            garanties=["VOL", "INCENDIE", "BRIS_GLACE"]
+        )
     
     # 0. Capability / Hearing / Understanding Check
     if any(k in msg for k in ["m'entends", "m'entend", "tu m'entends", "comprends", "comprendre", "arabe", "dialecte", "tunisien", "derja"]):
+        orass_addon = " Je suis connecté au Sandbox ORASS Bénin pour vos quittances en direct." if is_benin else ""
         return (
-            f"Oui parfait{greeting_name} ! Je vous entends et je vous comprends très bien. "
-            f"Je suis connecté au Sandbox ORASS pour calculer vos quittances en direct. "
+            f"Oui parfait{greeting_name} ! Je vous entends et je vous comprends très bien.{orass_addon} "
             f"Je peux échanger avec vous en Français, en Arabe et en Dialecte. "
-            f"Comment puis-je vous aider pour votre voiture ?\n\n"
-            f"[Obtenir mon devis ORASS]  [Découvrir les formules]"
+            f"Comment puis-je vous aider pour votre véhicule à {cfg['name']} ?\n\n"
+            f"[Obtenir mon devis]  [Découvrir les formules]"
         )
 
     # 1. ARABIC LANGUAGE MODE
     if lang_mode == "ARABIC":
         name_prefix = f" يا {name_str}" if name_str and name_str != "Prospect Inconnu" else ""
+        ttc_str = f" {orass_quote['quittance']['MONTTTC']} {cfg['currency']}" if is_benin and orass_quote else ""
         return (
             f"مرحباً بك{name_prefix} في {cfg['entity']} ! 🛡️ "
-            f"أنا مرتبط مباشرة بنظام ORASS لحساب العروض والوثائق الرسمية. "
-            f"قيمة الوثيقة الرسمية الشاملة TTC هي {quit_info['MONTTTC']} {cfg['currency']}. "
-            f"كيف يمكنني مساعدتك في تأمين سيارتك اليوم؟\n\n"
+            f"أنا هنا لمساعدتك في حساب أفضل عروض التأمين لسيارتك.{ttc_str} "
+            f"كيف يمكنني مساعدتك اليوم؟\n\n"
             f"[الحصول على العرض]  [حجز موعد]"
         )
 
@@ -193,39 +204,60 @@ def generate_instant_rag_response(user_message: str, cfg: dict, prospect_data: d
         name_prefix = f" يا {name_str}" if name_str and name_str != "Prospect Inconnu" else ""
         return (
             f"Marhaba bik{name_prefix} ! N'effhemk w n'ssm3ek mlih. "
-            f"Rani connecte en direct m3a ORASS bech n'essablek el quittance mte3 el karhaba {vehicle_str}. "
-            f"Prix total TTC : {quit_info['MONTTTC']} {cfg['currency']}.\n\n"
+            f"Rani hna bech n'essablek el devis mte3 el karhaba {vehicle_str} m3a {cfg['entity']}.\n\n"
             f"[Obtenir mon devis]  [Prendre Rendez-vous]"
         )
 
-    # 3. FRENCH QUOTE & ORASS CIMA TAX BREAKDOWN INTENTS
+    # 3. FRENCH QUOTE & TARIFF INTENTS
     if any(k in msg for k in ["trois devis", "3 devis", "pour chaque formule", "combien ca coute", "combien ça me coûte", "prix pour chaque"]):
-        return (
-            f"Voici le calcul officiel des trois formules issu du Core Insurance ORASS pour votre {vehicle_str} :\n\n"
-            f"1. {p1['name']} : 75 000 {cfg['currency']} par an (Responsabilité Civile CIMA).\n"
-            f"2. {p2['name']} : 135 000 {cfg['currency']} par an (Tiers amélioré avec vol, incendie et bris de glace).\n"
-            f"3. {p3['name']} : {detail['primeTtc']} {cfg['currency']} par an (Tous Risques quittance N° {quit_info['NUMEQUIT']}).\n\n"
-            f"Quelle formule souhaitez-vous souscrire ?\n\n"
-            f"[Souscrire {p2['name']}]  [Souscrire {p3['name']}]  [Prendre Rendez-vous]"
-        )
+        if is_benin and orass_quote:
+            detail = orass_quote["detail"]
+            quit_info = orass_quote["quittance"]
+            return (
+                f"Voici le calcul officiel des trois formules issu du Sandbox ORASS pour votre {vehicle_str} au {cfg['name']} :\n\n"
+                f"1. {p1['name']} : 75 000 FCFA par an (Responsabilité Civile CIMA Bénin).\n"
+                f"2. {p2['name']} : 135 000 FCFA par an (Tiers amélioré avec vol et bris de glace Cotonou).\n"
+                f"3. {p3['name']} : {detail['primeTtc']} FCFA par an (Tous Risques ORASS Quittance N° {quit_info['NUMEQUIT']}).\n\n"
+                f"Quelle formule souhaitez-vous souscrire ?\n\n"
+                f"[Souscrire {p2['name']}]  [Souscrire {p3['name']}]  [Prendre Rendez-vous]"
+            )
+        else:
+            return (
+                f"Voici le tarif annuel de nos 3 formules {cfg['entity']} pour votre {vehicle_str} :\n\n"
+                f"1. {p1['name']} : formule économique Responsabilité Civile.\n"
+                f"2. {p2['name']} : la couverture intermédiaire recommandée.\n"
+                f"3. {p3['name']} : la protection intégrale tous risques.\n\n"
+                f"Quelle formule préférez-vous ?\n\n"
+                f"[{p2['name']}]  [{p3['name']}]  [Prendre RDV]"
+            )
 
     if any(k in msg for k in ["prix", "tarif", "cout", "coût", "combien", "simulation", "devis", "estimation", "obtenir mon tarif", "orass"]):
-        return (
-            f"Voici l'analyse détaillée de votre quittance ORASS (N° {quit_info['NUMEQUIT']}) pour votre {vehicle_str} :\n\n"
-            f"• Prime RC Nette : {detail['primeRcNette']} {cfg['currency']}\n"
-            f"• Garanties Annexes : {detail['garantiesAnnexes']} {cfg['currency']}\n"
-            f"• Taxe Assurance CIMA : {detail['taxeAssurance']} {cfg['currency']}\n"
-            f"• Taxe FGA & Timbres : {detail['taxeFga'] + detail['timbres']} {cfg['currency']}\n"
-            f"💰 Montant Total Quittance TTC : {detail['primeTtc']} {cfg['currency']}\n\n"
-            f"Souhaitez-vous émettre votre police d'assurance officielle maintenant ?\n\n"
-            f"[Émettre ma Police ORASS]  [Prendre RDV Conseiller]"
-        )
+        if is_benin and orass_quote:
+            detail = orass_quote["detail"]
+            quit_info = orass_quote["quittance"]
+            return (
+                f"Voici l'analyse détaillée de votre quittance ORASS Bénin (N° {quit_info['NUMEQUIT']}) pour votre {vehicle_str} :\n\n"
+                f"• Prime RC Nette : {detail['primeRcNette']} FCFA\n"
+                f"• Garanties Annexes : {detail['garantiesAnnexes']} FCFA\n"
+                f"• Taxe Assurance CIMA : {detail['taxeAssurance']} FCFA\n"
+                f"• Taxe FGA Bénin & Timbres : {detail['taxeFga'] + detail['timbres']} FCFA\n"
+                f"💰 Montant Total Quittance TTC : {detail['primeTtc']} FCFA\n\n"
+                f"Souhaitez-vous émettre votre police d'assurance officielle maintenant ?\n\n"
+                f"[Émettre ma Police ORASS]  [Prendre RDV Conseiller]"
+            )
+        else:
+            return (
+                f"Pour votre {vehicle_str}, {cfg['entity']} vous propose la formule **{p2['name']}** au meilleur tarif avec facilités de paiement.\n\n"
+                f"Souhaitez-vous recevoir une proposition personnalisée ou parler à un conseiller ?\n\n"
+                f"[{p2['name']}]  [{p3['name']}]  [Prendre RDV Conseiller]"
+            )
 
+    orass_mention = " (Interconnecté Sandbox ORASS)" if is_benin else ""
     return (
-        f"Chez {cfg['entity']} {country_prep} {cfg['name']} (Interconnecté ORASS Sandbox), nous proposons 3 niveaux de protection :\n"
+        f"Chez {cfg['entity']} {country_prep} {cfg['name']}{orass_mention}, nous proposons 3 niveaux de protection :\n"
         f"1. {p1['name']} : la couverture Responsabilité Civile essentielle.\n"
         f"2. {p2['name']} : la formule équilibrée recommandée.\n"
-        f"3. {p3['name']} : la protection tous risques intégrale (Quittance TTC : {quit_info['MONTTTC']} {cfg['currency']}).\n\n"
+        f"3. {p3['name']} : la protection tous risques intégrale.\n\n"
         f"Quelle formule souhaitez-vous découvrir ?\n\n"
-        f"[{p2['name']}]  [{p3['name']}]  [Obtenir mon tarif ORASS]"
+        f"[{p2['name']}]  [{p3['name']}]  [Obtenir mon tarif]"
     )
