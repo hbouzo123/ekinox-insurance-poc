@@ -580,6 +580,10 @@ Que souhaitez-vous faire ?
         let silenceDebounceTimer = null;
         let currentVoiceBuffer = '';
         let ttsSafetyTimer = null;
+        let chromeTtsHeartbeat = null;
+
+        // GLOBAL UTTERANCE ANCHOR TO PREVENT CHROME GARBAGE COLLECTION CUTOFF BUG
+        window.activeUtterances = [];
 
         function loadHighQualityVoice() {
             if (!synth) return;
@@ -595,6 +599,17 @@ Que souhaitez-vous faire ?
             if (speechSynthesis.onvoiceschanged !== undefined) {
                 speechSynthesis.onvoiceschanged = loadHighQualityVoice;
             }
+
+            // Chrome 14-second TTS silence pause prevention heartbeat
+            clearInterval(chromeTtsHeartbeat);
+            chromeTtsHeartbeat = setInterval(() => {
+                if (synth && synth.speaking) {
+                    try {
+                        synth.pause();
+                        synth.resume();
+                    } catch(e){}
+                }
+            }, 5000);
         }
 
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -745,6 +760,7 @@ Que souhaitez-vous faire ?
             if (recognition) try { recognition.stop(); } catch(e){}
             
             synth.cancel();
+            window.activeUtterances = [];
             if (ttsSafetyTimer) clearTimeout(ttsSafetyTimer);
 
             try {
@@ -772,6 +788,7 @@ Que souhaitez-vous faire ?
             function speakNextSentence() {
                 if (sentenceIndex >= sentences.length) {
                     if (ttsSafetyTimer) clearTimeout(ttsSafetyTimer);
+                    window.activeUtterances = [];
                     document.getElementById("call-avatar-ring").className = "voice-call-avatar-ring";
                     document.getElementById("call-audio-spectrum").classList.remove("active");
                     isProcessing = false;
@@ -788,6 +805,9 @@ Que souhaitez-vous faire ?
 
                 const utterance = new SpeechSynthesisUtterance(currentSentence);
                 
+                // GC PROTECTION: STORE GLOBAL REFERENCE
+                window.activeUtterances.push(utterance);
+
                 if (/[\u0600-\u06FF]/.test(currentSentence)) {
                     utterance.lang = 'ar-SA';
                 } else {
@@ -801,11 +821,15 @@ Que souhaitez-vous faire ?
                 utterance.volume = 1.0;
 
                 utterance.onend = function() {
+                    const idx = window.activeUtterances.indexOf(utterance);
+                    if (idx > -1) window.activeUtterances.splice(idx, 1);
                     speakNextSentence();
                 };
 
                 utterance.onerror = function(err) {
                     console.warn("Sentence TTS error:", err);
+                    const idx = window.activeUtterances.indexOf(utterance);
+                    if (idx > -1) window.activeUtterances.splice(idx, 1);
                     speakNextSentence();
                 };
 
@@ -813,10 +837,11 @@ Que souhaitez-vous faire ?
             }
 
             // Global safety timeout
-            const fallbackDelay = Math.max(4000, Math.min(15000, cleanText.length * 80));
+            const fallbackDelay = Math.max(4000, Math.min(18000, cleanText.length * 90));
             ttsSafetyTimer = setTimeout(() => {
                 console.warn("[TTS Safety Net] Overall fallback timeout triggered.");
                 synth.cancel();
+                window.activeUtterances = [];
                 document.getElementById("call-avatar-ring").className = "voice-call-avatar-ring";
                 document.getElementById("call-audio-spectrum").classList.remove("active");
                 isProcessing = false;
@@ -846,6 +871,7 @@ Que souhaitez-vous faire ?
             isCallActive = false;
             isProcessing = false;
             if (synth) synth.cancel();
+            window.activeUtterances = [];
             if (ttsSafetyTimer) clearTimeout(ttsSafetyTimer);
             if (recognition) try { recognition.stop(); } catch(e){}
             clearInterval(callTimerInterval);
