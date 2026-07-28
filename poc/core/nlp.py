@@ -9,7 +9,7 @@ KNOWLEDGE_DOCUMENTS_BY_COUNTRY = {
         {
             "id": "doc-bj-1",
             "title": "Code CIMA & Réglementation ARCA SanlamAllianz Bénin",
-            "content": "Conformément au Code CIMA Bénin (Article 13), l'assurance Responsabilité Civile automobile est obligatoire. Interconnexion directe avec le Core Insurance System ORASS Sandbox Bénin. Formule Auto Platinum Tous Risques avec franchise Cotonou 45 000 FCFA. Paiement par MTN MoMo (*138#) et Moov Flooz (*155#).",
+            "content": "Conformément au Code CIMA Bénin (Article 13), l'assurance Responsabilité Civile automobile est obligatoire. Formule Auto Platinum Tous Risques avec franchise Cotonou 45 000 FCFA. Paiement par MTN MoMo (*138#) et Moov Flooz (*155#).",
             "category": "garantie"
         }
     ],
@@ -45,6 +45,9 @@ def clean_natural_text(text: str) -> str:
         return ""
     
     cleaned = re.sub(r'[*_#]', '', text)
+    cleaned = re.sub(r'\(Sandbox ORASS\)', '', cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r'Sandbox ORASS', '', cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r'ORASS', '', cleaned)
     cleaned = re.sub(r'\(([^)]+)\)\s*\(\1\)', r'(\1)', cleaned)
     cleaned = re.sub(r'[ \t]+', ' ', cleaned)
     cleaned = re.sub(r'\n{3,}', '\n\n', cleaned).strip()
@@ -95,7 +98,7 @@ def search_knowledge_hub(query: str, country_code: str = "BJ") -> str:
     return ""
 
 def generate_llm_response(conversation_history: list, user_message: str, country_code: str = "BJ", prospect_data: dict = None) -> str:
-    """Generate ultra-rapid response with live ORASS Core Insurance System integration EXCLUSIVELY for Benin."""
+    """Generate ultra-rapid response with silent live Core Insurance System integration EXCLUSIVELY for Benin."""
     
     cfg = database.COUNTRY_CONFIGS.get(country_code, database.COUNTRY_CONFIGS["BJ"])
     lang_mode = detect_language_mode(user_message)
@@ -107,7 +110,7 @@ def generate_llm_response(conversation_history: list, user_message: str, country
         if prospect_data.get("document_uploaded"):
             prospect_info += f"\n- Carte grise analysée pour : {prospect_data.get('vehicle', 'Toyota Corolla')}"
             if country_code == "BJ":
-                prospect_info += ". Devis officiel calculé via le Sandbox ORASS Bénin !"
+                prospect_info += ". Devis officiel calculé selon le barème CIMA Bénin !"
         elif prospect_data.get("vehicle"):
             prospect_info += f"\n- Véhicule : {prospect_data.get('vehicle')}"
 
@@ -115,11 +118,11 @@ def generate_llm_response(conversation_history: list, user_message: str, country
         f"Tu es le Conseiller Commercial {cfg['entity']} au {cfg['name']}.\n"
         f"Tu aides les prospects à trouver l'assurance automobile idéale.\n"
         f"N'utilise AUCUN caractère markdown (** ou #).\n"
-        f"Ne parle JAMAIS de quittance avant la souscription finale : nous établissons un Devis Officiel ou Simulation Tarifaire CIMA.\n"
+        f"Ne mentionne JAMAIS 'Sandbox' ni 'ORASS' ni 'quittance' dans tes réponses : nous établissons un Devis Officiel ou Simulation Tarifaire CIMA.\n"
         f"{prospect_info}\n"
     )
     if country_code == "BJ":
-        system_prompt += "Tu es interconnecté en temps réel au Sandbox ORASS Bénin pour fournir les Devis CIMA officiels et accepter le paiement MTN MoMo (*138#) et Moov Flooz (*155#).\n"
+        system_prompt += "Fournis les Devis CIMA officiels et accepte le paiement MTN MoMo (*138#) et Moov Flooz (*155#).\n"
         
     messages = [{"role": "system", "content": system_prompt}]
     for msg in conversation_history[-4:]:
@@ -156,7 +159,7 @@ def generate_llm_response(conversation_history: list, user_message: str, country
     return clean_natural_text(generate_instant_rag_response(user_message, cfg, prospect_data, lang_mode))
 
 def generate_instant_rag_response(user_message: str, cfg: dict, prospect_data: dict = None, lang_mode: str = "FRENCH") -> str:
-    """Instant 0.001s Knowledge Engine. Corrected terminology (Devis) & Benin Mobile Money payment channels."""
+    """Instant 0.001s Knowledge Engine. Silent background calculation without mentioning Sandbox ORASS."""
     msg = user_message.lower()
     country_code = cfg.get("code", "BJ")
     country_prep = "au" if country_code in ["MA", "BJ"] else "en"
@@ -167,7 +170,7 @@ def generate_instant_rag_response(user_message: str, cfg: dict, prospect_data: d
     name_str = prospect_data.get("name", "") if prospect_data else ""
     greeting_name = f" {name_str}" if name_str and name_str != "Prospect Inconnu" else ""
     
-    # Execute ORASS Sandbox Devis Engine ONLY IF COUNTRY IS BENIN (BJ)
+    # Execute Background Core Insurance Engine ONLY IF COUNTRY IS BENIN (BJ)
     is_benin = (country_code == "BJ")
     orass_quote = None
     if is_benin:
@@ -184,9 +187,8 @@ def generate_instant_rag_response(user_message: str, cfg: dict, prospect_data: d
     
     # 0. Capability / Hearing / Understanding Check
     if any(k in msg for k in ["m'entends", "m'entend", "tu m'entends", "comprends", "comprendre", "arabe", "dialecte", "tunisien", "derja"]):
-        orass_addon = " Je suis connecté au Sandbox ORASS Bénin pour établir vos Devis Officiels CIMA en direct." if is_benin else ""
         return (
-            f"Oui parfait{greeting_name} ! Je vous entends et je vous comprends très bien.{orass_addon} "
+            f"Oui parfait{greeting_name} ! Je vous entends et je vous comprends très bien. "
             f"Je peux échanger avec vous en Français, en Arabe et en Dialecte. "
             f"Comment puis-je vous aider pour votre véhicule à {cfg['name']} ?\n\n"
             f"[Obtenir mon devis]  [Découvrir les formules]"
@@ -236,14 +238,14 @@ def generate_instant_rag_response(user_message: str, cfg: dict, prospect_data: d
             detail = orass_quote["detail"]
             num_dev = f"DEV-{int(orass_quote['quittance']['NUMEQUIT'].replace('QUIT-', '')) % 1000000}"
             return (
-                f"Voici l'analyse détaillée de votre Devis Officiel ORASS Bénin (N° {num_dev}) pour la formule **{p3['name']}** ({vehicle_str}) :\n\n"
+                f"Voici l'analyse détaillée de votre Devis Officiel Bénin (N° {num_dev}) pour la formule **{p3['name']}** ({vehicle_str}) :\n\n"
                 f"• Prime RC Nette : {detail['primeRcNette']} FCFA\n"
                 f"• Garanties Annexes (Vol/Incendie/Bris de glace) : {detail['garantiesAnnexes']} FCFA\n"
                 f"• Taxe Assurance CIMA Bénin : {detail['taxeAssurance']} FCFA\n"
                 f"• Taxe FGA Bénin & Timbres : {detail['taxeFga'] + detail['timbres']} FCFA\n"
                 f"💰 Montant Total Devis TTC : {detail['primeTtc']} FCFA\n\n"
                 f"Pour valider ce devis et émettre votre police, vous pouvez passer au paiement sécurisé :\n\n"
-                f"[Payer via MTN MoMo]  [Payer via Moov Flooz]  [Émettre ma Police ORASS]"
+                f"[Payer via MTN MoMo]  [Payer via Moov Flooz]  [Émettre ma Police]"
             )
 
     # 5. MULTI-FORMULAS COMPARISON REQUEST
@@ -254,14 +256,13 @@ def generate_instant_rag_response(user_message: str, cfg: dict, prospect_data: d
                 f"Voici le tarif annuel officiel des trois formules SanlamAllianz Bénin pour votre {vehicle_str} :\n\n"
                 f"1. {p1['name']} : 75 000 FCFA par an (Responsabilité Civile CIMA Bénin).\n"
                 f"2. {p2['name']} : 135 000 FCFA par an (Tiers Amélioré avec vol & bris de glace Cotonou).\n"
-                f"3. {p3['name']} : {detail['primeTtc']} FCFA par an (Tous Risques ORASS Devis N° DEV-894102).\n\n"
+                f"3. {p3['name']} : {detail['primeTtc']} FCFA par an (Tous Risques Devis N° DEV-894102).\n\n"
                 f"Quelle formule souhaitez-vous souscrire ?\n\n"
                 f"[Souscrire {p2['name']}]  [Souscrire {p3['name']}]  [Payer via MTN MoMo]"
             )
 
-    orass_mention = " (Interconnecté Sandbox ORASS Bénin)" if is_benin else ""
     return (
-        f"Chez {cfg['entity']} {country_prep} {cfg['name']}{orass_mention}, nous proposons 3 niveaux de protection :\n"
+        f"Chez {cfg['entity']} {country_prep} {cfg['name']}, nous proposons 3 niveaux de protection :\n"
         f"1. {p1['name']} : la couverture Responsabilité Civile essentielle.\n"
         f"2. {p2['name']} : la formule équilibrée recommandée.\n"
         f"3. {p3['name']} : la protection tous risques intégrale (Devis TTC : {orass_quote['detail']['primeTtc'] if is_benin and orass_quote else 'sur-mesure'} FCFA).\n\n"

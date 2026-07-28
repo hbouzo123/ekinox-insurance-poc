@@ -12,7 +12,7 @@ COUNTRY_CONFIGS = {
         "products": [
             {"id": "bj-p1", "name": "Auto Classique (Tiers)", "desc": "Responsabilité Civile obligatoire CIMA Bénin + Défense Recours", "recommended_for": "Occasion"},
             {"id": "bj-p2", "name": "Auto Zen (Tiers Amélioré)", "desc": "Tiers + Vol + Incendie + Bris de glace avec assistance Cotonou/Porto-Novo", "recommended_for": "Usage quotidien"},
-            {"id": "bj-p3", "name": "Auto Platinum (Tous Risques ORASS)", "desc": "Couverture intégrale 0 km, dommages tous accidents et véhicule de remplacement", "recommended_for": "Véhicule Neuf"}
+            {"id": "bj-p3", "name": "Auto Platinum (Tous Risques)", "desc": "Couverture intégrale 0 km, dommages tous accidents et véhicule de remplacement", "recommended_for": "Véhicule Neuf"}
         ],
         "default_garage": "Réseau Auto Sanlam Cotonou - Avenue Jean-Paul II, Haie Vive",
         "standard_franchise": 45000
@@ -77,7 +77,7 @@ PROSPECTS_BY_COUNTRY = {
             "phone": "+229 97 12 34 56",
             "channel": "WhatsApp",
             "vehicle": "Toyota Corolla (2023) - Cotonou",
-            "need": "Auto Platinum (Tous Risques ORASS)",
+            "need": "Auto Platinum (Tous Risques)",
             "intention": "Chaud 🔥",
             "document_uploaded": True,
             "document_name": "carte_grise_dossou.pdf",
@@ -85,9 +85,9 @@ PROSPECTS_BY_COUNTRY = {
             "orass_policy_num": "POL-AUTO-BENIN-889102",
             "conversation": [
                 {"sender": "user", "text": "Bonjour, je suis Dossou à Cotonou. Je veux assurer ma Toyota Corolla neuve immatriculée RB-1234-AB."},
-                {"sender": "assistant", "text": "Bonjour M. Dossou ! Bienvenue chez SanlamAllianz Bénin. Votre quittance ORASS N° QUIT-781920 a été calculée sous le Code CIMA. Votre police N° POL-AUTO-BENIN-889102 a été émise avec succès."}
+                {"sender": "assistant", "text": "Bonjour M. Dossou ! Bienvenue chez SanlamAllianz Bénin. Votre Devis N° DEV-781920 a été calculé sous le Code CIMA. Votre police N° POL-AUTO-BENIN-889102 a été émise avec succès."}
             ],
-            "summary": "Prospect Koffi Bio Dossou (Cotonou, Bénin), Toyota Corolla (RB-1234-AB). Police ORASS POL-AUTO-BENIN-889102 validée.",
+            "summary": "Prospect Koffi Bio Dossou (Cotonou, Bénin), Toyota Corolla (RB-1234-AB). Police POL-AUTO-BENIN-889102 validée.",
             "next_action": "Télécharger l'attestation CIMA Bénin et la carte verte."
         }
     },

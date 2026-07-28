@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sales Workspace - SanlamAllianz & ORASS Sandbox</title>
+    <title>Sales Workspace - SanlamAllianz</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #0075C9; /* Sanlam Lochmara Blue */
-            --primary-dark: #003781; /* Resolution / Allianz Blue */
-            --secondary: #00A3E0; /* Sanlam Cyan Accent */
+            --primary: #0075C9;
+            --primary-dark: #003781;
+            --secondary: #00A3E0;
             --bg-dark: #0b132b;
             --card-bg: rgba(15, 23, 42, 0.7);
             --text-light: #f8fafc;
             --text-muted: #94a3b8;
             --border: rgba(255, 255, 255, 0.1);
-            --danger: #ef4444;
             --success: #10b981;
+            --warning: #f59e0b;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -28,11 +28,11 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            background-image: radial-gradient(circle at 10% 20%, rgba(0, 117, 201, 0.12) 0%, transparent 40%);
+            background-image: radial-gradient(circle at 80% 10%, rgba(0, 117, 201, 0.15) 0%, transparent 50%);
         }
 
-        header.site-header {
-            padding: 0.8rem 3rem;
+        header {
+            padding: 1rem 3rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -43,79 +43,74 @@
 
         .logo-container { display: flex; align-items: center; text-decoration: none; }
 
-        .btn-export {
-            background: var(--primary);
-            color: white;
-            padding: 0.6rem 1.2rem;
-            border-radius: 0.6rem;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 0.9rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: all 0.2s ease;
-        }
-
-        .btn-export:hover { background: #005f9e; }
-
         main {
             flex: 1;
             max-width: 1400px;
             width: 100%;
             margin: 0 auto;
-            padding: 2rem;
+            padding: 2rem 3rem;
             display: flex;
             flex-direction: column;
             gap: 2rem;
         }
 
-        .cockpit-title { font-size: 1.4rem; font-weight: 600; border-left: 4px solid var(--secondary); padding-left: 0.8rem; }
-        .cockpit-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.5rem; }
-
+        .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; }
         .kpi-card {
             background: var(--card-bg);
             border: 1px solid var(--border);
             padding: 1.5rem;
             border-radius: 1.2rem;
+            backdrop-filter: blur(10px);
             display: flex;
             flex-direction: column;
-            gap: 0.4rem;
+            gap: 0.5rem;
         }
-        .kpi-card label { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
-        .kpi-value { font-size: 2.2rem; font-weight: 800; }
-        .kpi-card-secondary .kpi-value { color: var(--secondary); }
-        .kpi-card-primary .kpi-value { color: #93c5fd; }
+
+        .kpi-card label { font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+        .kpi-card .kpi-value { font-size: 2rem; font-weight: 800; color: white; }
+
+        .kpi-card-primary { border-top: 4px solid var(--primary); }
+        .kpi-card-secondary { border-top: 4px solid var(--secondary); }
+        .kpi-card-success { border-top: 4px solid var(--success); }
 
         .workspace-header { display: flex; justify-content: space-between; align-items: center; }
-        .workspace-title { font-size: 1.4rem; font-weight: 600; border-left: 4px solid var(--primary); padding-left: 0.8rem; }
+        .workspace-title { font-size: 1.5rem; font-weight: 700; }
 
         .table-container {
             background: var(--card-bg);
             border: 1px solid var(--border);
             border-radius: 1.2rem;
             overflow: hidden;
+            backdrop-filter: blur(10px);
         }
 
-        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.92rem; }
-        th { background: rgba(255,255,255,0.02); padding: 1.2rem; font-weight: 600; color: var(--text-muted); border-bottom: 1px solid var(--border); text-transform: uppercase; font-size: 0.78rem; }
-        td { padding: 1.2rem; border-bottom: 1px solid rgba(255, 255, 255, 0.03); vertical-align: middle; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th { background: rgba(255, 255, 255, 0.03); padding: 1.1rem 1.5rem; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; border-bottom: 1px solid var(--border); }
+        td { padding: 1.2rem 1.5rem; border-bottom: 1px solid var(--border); font-size: 0.92rem; vertical-align: middle; }
 
-        .badge { padding: 0.25rem 0.7rem; border-radius: 2rem; font-size: 0.78rem; font-weight: 600; display: inline-block; }
-        .badge-hot { background: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); }
-        .badge-warm { background: rgba(245, 158, 11, 0.15); color: #fde047; border: 1px solid rgba(245, 158, 11, 0.3); }
-        .badge-cold { background: rgba(59, 130, 246, 0.15); color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.3); }
-        
-        .badge-doc { background: rgba(0, 163, 224, 0.15); color: #99f6e4; border: 1px solid rgba(0, 163, 224, 0.3); }
-        .badge-nodoc { background: rgba(107, 114, 128, 0.1); color: var(--text-muted); border: 1px solid var(--border); }
-        .badge-orass { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); font-weight: 700; }
+        tr:hover { background: rgba(255, 255, 255, 0.02); }
+
+        .badge {
+            display: inline-block;
+            padding: 0.35rem 0.8rem;
+            border-radius: 1rem;
+            font-size: 0.78rem;
+            font-weight: 700;
+        }
+
+        .badge-hot { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); }
+        .badge-warm { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); }
+        .badge-cold { background: rgba(148, 163, 184, 0.2); color: #cbd5e1; border: 1px solid rgba(148, 163, 184, 0.4); }
+        .badge-doc { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+        .badge-nodoc { background: rgba(255, 255, 255, 0.05); color: var(--text-muted); }
+        .badge-orass { background: rgba(0, 117, 201, 0.25); color: #38bdf8; border: 1px solid rgba(0, 117, 201, 0.5); }
     </style>
 </head>
 <body>
 
-    <header class="site-header">
+    <header>
         <a href="/" class="logo-container">
-            <svg width="200" height="45" viewBox="0 0 220 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg width="220" height="50" viewBox="0 0 220 50" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <circle cx="25" cy="25" r="22" fill="#0075C9"/>
                 <path d="M25 9C16.1634 9 9 16.1634 9 25C9 33.8366 16.1634 41 25 41C33.8366 41 41 33.8366 41 25C41 16.1634 33.8366 9 25 9ZM25 38C17.8203 38 12 32.1797 12 25C12 17.8203 17.8203 12 25 12C32.1797 12 38 17.8203 38 25C38 32.1797 32.1797 38 25 38Z" fill="#FFFFFF"/>
                 <path d="M25 15C19.4772 15 15 19.4772 15 25C15 27.5 16 29.8 17.6 31.5L25 24L32.4 31.5C34 29.8 35 27.5 35 25C35 19.4772 30.5228 15 25 15Z" fill="#FFFFFF"/>
@@ -125,32 +120,31 @@
                 </text>
             </svg>
         </a>
-        
-        <a href="/api/sales/export" class="btn-export">
-            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-            Exporter Pipeline (CSV)
-        </a>
+
+        <div style="display:flex; gap:1rem; align-items:center;">
+            <span style="font-size:0.9rem; color:var(--text-muted);">Cockpit Commercial Digital</span>
+            <a href="/sales/chat" style="color:var(--secondary); text-decoration:none; font-weight:600; font-size:0.9rem;">← Retour au Chat</a>
+        </div>
     </header>
 
     <main>
-        <h3 class="cockpit-title">Business Cockpit - Performance Commerciale Target</h3>
-        <div class="cockpit-grid">
-            <div class="kpi-card kpi-card-secondary">
-                <label>Coût d'Acquisition Client (CAC)</label>
-                <div class="kpi-value">35 €</div>
-                <div style="color: var(--success); font-size:0.85rem; font-weight:600;">-30% vs Historique (50 €)</div>
-            </div>
-            
+        <div class="kpi-grid">
             <div class="kpi-card kpi-card-primary">
-                <label>Taux de Conversion Lead</label>
-                <div class="kpi-value">5.5 %</div>
-                <div style="color: var(--success); font-size:0.85rem; font-weight:600;">+1.5 pts vs Formulaire (4.0%)</div>
+                <label>Prospects Qualifiés</label>
+                <div class="kpi-value">1 420</div>
+                <div style="color: var(--success); font-size:0.85rem; font-weight:600;">+37.5% de conversion</div>
             </div>
 
-            <div class="kpi-card">
-                <label>Taux d'Abandon de Parcours</label>
-                <div class="kpi-value">25 %</div>
-                <div style="color: var(--success); font-size:0.85rem; font-weight:600;">-47 pts vs Formulaire Web (72%)</div>
+            <div class="kpi-card kpi-card-secondary">
+                <label>Coût d'Acquisition (CAC)</label>
+                <div class="kpi-value">35 €</div>
+                <div style="color: var(--success); font-size:0.85rem; font-weight:600;">-30% vs canal physique (50€)</div>
+            </div>
+
+            <div class="kpi-card kpi-card-success">
+                <label>Taux de Conversion V1</label>
+                <div class="kpi-value">5.5 %</div>
+                <div style="color: var(--success); font-size:0.85rem; font-weight:600;">Vs 4.0% benchmark initial</div>
             </div>
 
             <div class="kpi-card kpi-card-secondary">
@@ -161,7 +155,7 @@
         </div>
 
         <div class="workspace-header">
-            <h3 class="workspace-title">Base Prospects & Qualification Pipeline (Exclusivité Sandbox ORASS Bénin 🇧🇯)</h3>
+            <h3 class="workspace-title">Base Prospects & Qualification Pipeline (Bénin 🇧🇯)</h3>
         </div>
 
         <div class="table-container">
@@ -171,7 +165,7 @@
                         <th>Prospect / Contact</th>
                         <th>Canal d'Entrée</th>
                         <th>Product Advisor (Formule)</th>
-                        <th>Statut ORASS Core</th>
+                        <th>Statut Tarification Core</th>
                         <th>Justificatifs (OCR)</th>
                         <th>Rendez-vous Conseiller</th>
                         <th>Synthèse & Diagnostic IA</th>
@@ -211,7 +205,7 @@
                         
                     const orassBadge = p.orass_policy_num
                         ? `<span class="badge badge-orass">📜 Police ${p.orass_policy_num}</span>`
-                        : (p.country === 'BJ' ? `<span class="badge badge-doc" style="background:rgba(0,163,224,0.15); color:#38bdf8;">Simulation ORASS BJ</span>` : `<span class="badge badge-nodoc">Tarif Standard</span>`);
+                        : (p.country === 'BJ' ? `<span class="badge badge-doc" style="background:rgba(0,163,224,0.15); color:#38bdf8;">Devis CIMA BJ</span>` : `<span class="badge badge-nodoc">Tarif Standard</span>`);
 
                     tr.innerHTML = `
                         <td>

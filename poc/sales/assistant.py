@@ -69,7 +69,7 @@ def handle_sales_conversation(prospect_id: str, message_text: str, channel: str 
     elif any(k in msg_lower for k in ["1ere", "1ère", "première", "premiere", "la 1", "formule 1"]):
         prospect["need"] = cfg["products"][0]["name"]
 
-    # 4. Trigger ORASS Policy Issuance (new-deal) ONLY IF COUNTRY IS BENIN (BJ)
+    # 4. Trigger Policy Issuance (new-deal) ONLY IF COUNTRY IS BENIN (BJ)
     if country_code == "BJ" and any(k in msg_lower for k in ["souscrire", "émettre", "emettre", "valider la police", "confirmer la souscription"]):
         if not prospect.get("orass_policy_num"):
             v_name = prospect.get("vehicle") or "Toyota Corolla"
@@ -120,7 +120,7 @@ def handle_sales_conversation(prospect_id: str, message_text: str, channel: str 
     assistant_reply = nlp.generate_llm_response(history_tuples, message_text, country_code=country_code, prospect_data=prospect)
     
     if country_code == "BJ" and prospect.get("orass_policy_num") and "POL-AUTO" not in assistant_reply:
-        assistant_reply += f"\n\n🎉 Félicitations ! Votre Police d'Assurance ORASS Officielle a été émise : N° {prospect['orass_policy_num']}."
+        assistant_reply += f"\n\n🎉 Félicitations ! Votre Police d'Assurance Officielle a été émise : N° {prospect['orass_policy_num']}."
         
     prospect["conversation"].append({"sender": "assistant", "text": assistant_reply})
     
@@ -172,7 +172,7 @@ def update_lead_intelligence(prospect: dict, cfg: dict):
     if prospect["need"]:
         summary_parts.append(f"Formule: {prospect['need']}.")
     if prospect.get("orass_policy_num"):
-        summary_parts.append(f"Police ORASS: {prospect['orass_policy_num']}.")
+        summary_parts.append(f"Police: {prospect['orass_policy_num']}.")
     elif prospect["document_uploaded"]:
         summary_parts.append(f"Pièces: Validées.")
     if prospect.get("appointment"):
@@ -181,11 +181,11 @@ def update_lead_intelligence(prospect: dict, cfg: dict):
     prospect["summary"] = " ".join(summary_parts)
     
     if prospect.get("orass_policy_num"):
-        prospect["next_action"] = f"Police ORASS {prospect['orass_policy_num']} émise. Télécharger la carte verte."
+        prospect["next_action"] = f"Police {prospect['orass_policy_num']} émise. Télécharger la carte verte."
     elif prospect.get("appointment"):
         prospect["next_action"] = f"Rendez-vous téléphonique planifié le {prospect['appointment']}."
     elif prospect["document_uploaded"] or prospect["intention"] == "Chaud 🔥":
-        action_str = "Émettre la Police Auto ORASS ou proposer un rendez-vous." if cfg['code'] == "BJ" else "Proposer un rendez-vous pour souscription."
+        action_str = "Émettre la Police Auto Officielle ou proposer un rendez-vous." if cfg['code'] == "BJ" else "Proposer un rendez-vous pour souscription."
         prospect["next_action"] = action_str
     else:
         prospect["next_action"] = f"Demander l'upload du certificat d'immatriculation ({cfg['name']})."
