@@ -14,7 +14,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
-from core import config, database
+from core import config, database, orass_sandbox_routes
 from sales import routes as sales_routes
 from fraud import routes as fraud_routes
 
@@ -39,6 +39,7 @@ async def add_no_cache_header(request: Request, call_next):
 # Mount routes
 app.include_router(sales_routes.router)
 app.include_router(fraud_routes.router)
+app.include_router(orass_sandbox_routes.router)
 
 templates = Jinja2Templates(directory="templates")
 
