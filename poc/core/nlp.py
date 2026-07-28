@@ -118,7 +118,8 @@ def generate_llm_response(conversation_history: list, user_message: str, country
         f"Tu es le Conseiller Commercial {cfg['entity']} au {cfg['name']}.\n"
         f"Tu aides les prospects à trouver l'assurance automobile idéale.\n"
         f"N'utilise AUCUN caractère markdown (** ou #).\n"
-        f"Ne mentionne JAMAIS 'Sandbox' ni 'ORASS' ni 'quittance' dans tes réponses : nous établissons un Devis Officiel ou Simulation Tarifaire CIMA.\n"
+        f"Ne mentionne JAMAIS 'Sandbox' ni 'ORASS' ni 'quittance' dans tes réponses.\n"
+        f"Si le prospect n'a pas encore indiqué son véhicule ni envoyé de carte grise, demande-lui la marque et le modèle avant de donner un devis personnalisé.\n"
         f"{prospect_info}\n"
     )
     if country_code == "BJ":
@@ -159,14 +160,16 @@ def generate_llm_response(conversation_history: list, user_message: str, country
     return clean_natural_text(generate_instant_rag_response(user_message, cfg, prospect_data, lang_mode))
 
 def generate_instant_rag_response(user_message: str, cfg: dict, prospect_data: dict = None, lang_mode: str = "FRENCH") -> str:
-    """Instant 0.001s Knowledge Engine. Silent background calculation without mentioning Sandbox ORASS."""
+    """Instant 0.001s Knowledge Engine with smart vehicle qualification and clarification handling."""
     msg = user_message.lower()
     country_code = cfg.get("code", "BJ")
     country_prep = "au" if country_code in ["MA", "BJ"] else "en"
     products = cfg["products"]
     p1, p2, p3 = products[0], products[1], products[2]
     
-    vehicle_str = prospect_data.get("vehicle", "votre véhicule") if prospect_data else "votre véhicule"
+    has_uploaded_doc = prospect_data.get("document_uploaded", False) if prospect_data else False
+    vehicle_known = (prospect_data.get("vehicle") and "informations" not in prospect_data.get("vehicle").lower()) if prospect_data else False
+    vehicle_str = prospect_data.get("vehicle", "votre véhicule") if (prospect_data and vehicle_known) else "votre véhicule"
     name_str = prospect_data.get("name", "") if prospect_data else ""
     greeting_name = f" {name_str}" if name_str and name_str != "Prospect Inconnu" else ""
     
@@ -182,10 +185,25 @@ def generate_instant_rag_response(user_message: str, cfg: dict, prospect_data: d
             garanties=["VOL", "INCENDIE", "BRIS_GLACE"]
         )
 
-    # Ordinal selection detection: "la 3e", "la 3ème", "la troisième", "3e formule", "3eme", "la 3"
-    is_asking_third = any(k in msg for k in ["3e", "3ème", "3eme", "troisième", "troisieme", "la 3", "formule 3", "la platinum", "tous risques"])
-    
-    # 0. Capability / Hearing / Understanding Check
+    # 1. NEW VEHICLE PURCHASE INTENT ("j'ai acheté une nouvelle voiture", "nouveau véhicule")
+    if any(k in msg for k in ["nouvelle voiture", "nouveau véhicule", "acheté une voiture", "acheté un véhicule", "nouvelle auto"]):
+        return (
+            f"Félicitations pour votre nouveau véhicule{greeting_name} ! 🚗🎉\n\n"
+            f"Pour vous calculer votre Devis Officiel sur-mesure au {cfg['name']}, quelle est la marque et le modèle de votre voiture ?\n"
+            f"(Vous pouvez aussi simplement me scanner votre Carte Grise pour une saisie automatique instantanée).\n\n"
+            f"[Envoyer ma Carte Grise]  [Préciser le modèle]"
+        )
+
+    # 2. CLARIFICATION QUESTION INTENT ("comment as-tu pu faire un devis", "quelle voiture", "sans informations", "sans info", "pas partagé")
+    if any(k in msg for k in ["comment", "sans informations", "sans info", "quelle voiture", "pas partagé", "pas envoyé", "carte grise", "utilisé quelle"]):
+        return (
+            f"C'est une très bonne question{greeting_name} ! 🚗\n\n"
+            f"Le tarif indiqué était une estimation basée sur une puissance standard de 7 CV au Bénin. "
+            f"Pour calculer votre tarif exact au FCFA près, dites-moi simplement quelle est la marque et le modèle de votre voiture (ex: Toyota Corolla), ou partagez-moi une photo de votre Carte Grise !\n\n"
+            f"[Envoyer ma Carte Grise]  [Préciser mon modèle]"
+        )
+
+    # 3. CAPABILITY / HEARING / UNDERSTANDING CHECK
     if any(k in msg for k in ["m'entends", "m'entend", "tu m'entends", "comprends", "comprendre", "arabe", "dialecte", "tunisien", "derja"]):
         return (
             f"Oui parfait{greeting_name} ! Je vous entends et je vous comprends très bien. "
@@ -194,7 +212,7 @@ def generate_instant_rag_response(user_message: str, cfg: dict, prospect_data: d
             f"[Obtenir mon devis]  [Découvrir les formules]"
         )
 
-    # 1. ARABIC LANGUAGE MODE
+    # 4. ARABIC LANGUAGE MODE
     if lang_mode == "ARABIC":
         name_prefix = f" يا {name_str}" if name_str and name_str != "Prospect Inconnu" else ""
         ttc_str = f" {orass_quote['quittance']['MONTTTC']} FCFA" if is_benin and orass_quote else ""
@@ -205,16 +223,16 @@ def generate_instant_rag_response(user_message: str, cfg: dict, prospect_data: d
             f"[الحصول على العرض]  [حجز موعد]"
         )
 
-    # 2. TUNISIAN DERJA MODE
+    # 5. TUNISIAN DERJA MODE
     if lang_mode == "DERJA":
         name_prefix = f" يا {name_str}" if name_str and name_str != "Prospect Inconnu" else ""
         return (
             f"Marhaba bik{name_prefix} ! N'effhemk w n'ssm3ek mlih. "
-            f"Rani hna bech n'essablek el devis mte3 el karhaba {vehicle_str} m3a {cfg['entity']}.\n\n"
+            f"Rani hna bech n'essablek el devis mte3 el karhaba m3a {cfg['entity']}.\n\n"
             f"[Obtenir mon devis]  [Prendre Rendez-vous]"
         )
 
-    # 3. PAYMENT INTENTS (BENIN MOBILE MONEY)
+    # 6. PAYMENT INTENTS (BENIN MOBILE MONEY)
     if any(k in msg for k in ["payer", "paiement", "momo", "flooz", "mtn", "moov", "celtiis", "carte bancaire", "regler", "régler"]):
         if is_benin:
             return (
@@ -232,8 +250,17 @@ def generate_instant_rag_response(user_message: str, cfg: dict, prospect_data: d
                 f"[Payer par Mobile Money]  [Payer par Carte]  [Prendre RDV Agence]"
             )
 
-    # 4. ORDINAL OR SPECIFIC FORMULA QUOTATION REQUEST ("La 3e ?", "Devis 3e formule")
+    # 7. ORDINAL OR SPECIFIC FORMULA QUOTATION REQUEST ("La 3e ?", "Devis 3e formule")
+    is_asking_third = any(k in msg for k in ["3e", "3ème", "3eme", "troisième", "troisieme", "la 3", "formule 3", "la platinum", "tous risques"])
+    
     if is_asking_third or any(k in msg for k in ["devis", "simulation", "tarif", "prix", "combien", "obtenir mon tarif"]):
+        if not vehicle_known and not has_uploaded_doc:
+            return (
+                f"Pour vous calculer votre tarif exact au FCFA près pour la formule **{p3['name']}**{greeting_name}, "
+                f"quel est le modèle de votre véhicule (ex: Toyota Corolla) ? Vous pouvez aussi me partager une photo de votre Carte Grise.\n\n"
+                f"[Envoyer ma Carte Grise]  [Préciser mon véhicule]"
+            )
+            
         if is_benin and orass_quote:
             detail = orass_quote["detail"]
             num_dev = f"DEV-{int(orass_quote['quittance']['NUMEQUIT'].replace('QUIT-', '')) % 1000000}"
@@ -248,7 +275,7 @@ def generate_instant_rag_response(user_message: str, cfg: dict, prospect_data: d
                 f"[Payer via MTN MoMo]  [Payer via Moov Flooz]  [Émettre ma Police]"
             )
 
-    # 5. MULTI-FORMULAS COMPARISON REQUEST
+    # 8. MULTI-FORMULAS COMPARISON REQUEST
     if any(k in msg for k in ["trois devis", "3 devis", "pour chaque formule", "prix pour chaque"]):
         if is_benin and orass_quote:
             detail = orass_quote["detail"]
@@ -261,11 +288,12 @@ def generate_instant_rag_response(user_message: str, cfg: dict, prospect_data: d
                 f"[Souscrire {p2['name']}]  [Souscrire {p3['name']}]  [Payer via MTN MoMo]"
             )
 
+    # 9. DEFAULT FORMULA DISCOVERY MENU (No hardcoded devis before vehicle qualification)
     return (
         f"Chez {cfg['entity']} {country_prep} {cfg['name']}, nous proposons 3 niveaux de protection :\n"
         f"1. {p1['name']} : la couverture Responsabilité Civile essentielle.\n"
         f"2. {p2['name']} : la formule équilibrée recommandée.\n"
-        f"3. {p3['name']} : la protection tous risques intégrale (Devis TTC : {orass_quote['detail']['primeTtc'] if is_benin and orass_quote else 'sur-mesure'} FCFA).\n\n"
+        f"3. {p3['name']} : la protection tous risques intégrale.\n\n"
         f"Quelle formule souhaitez-vous découvrir ?\n\n"
         f"[{p2['name']}]  [{p3['name']}]  [Obtenir mon Devis Officiel]"
     )
