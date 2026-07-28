@@ -8,7 +8,13 @@ FRENCH_STOP_WORDS = {
     "quelle", "quelques", "chose", "merci", "voilà", "voila", "c'est", "fait", "est",
     "suis", "sommes", "êtes", "sont", "nous", "vous", "ils", "elles", "mon", "ma", "mes",
     "ton", "ta", "tes", "son", "sa", "ses", "notre", "votre", "leur", "ce", "cette", "ces",
-    "famille", "est-ce", "que", "tu", "peux", "arrives", "me", "comprendre", "arabe", "culture"
+    "famille", "est-ce", "que", "tu", "peux", "arrives", "me", "comprendre", "arabe", "culture",
+    "document", "fichier", "carte", "grise", "pdf", "prospect", "inconnu", "platinium", "platinum", "tiers", "zen"
+}
+
+INVALID_NAMES = {
+    "document", "fichier", "carte", "grise", "pdf", "prospect", "inconnu", "bonjour", "salut",
+    "oui", "non", "merci", "platinium", "platinum", "tiers", "zen", "formule", "auto", "devis", "tarif"
 }
 
 def handle_sales_conversation(prospect_id: str, message_text: str, channel: str = "WhatsApp") -> dict:
@@ -44,9 +50,9 @@ def handle_sales_conversation(prospect_id: str, message_text: str, channel: str 
     
     msg_lower = message_text.lower()
     
-    # 1. 100% Dynamic Name Extraction
+    # 1. 100% Dynamic Name Extraction with strict invalid word filtering
     name_found = extract_dynamic_name(message_text)
-    if name_found and prospect["name"] == "Prospect Inconnu":
+    if name_found and prospect["name"] == "Prospect Inconnu" and name_found.lower() not in INVALID_NAMES:
         prospect["name"] = name_found
         
     phone_found = re_search_phone(message_text)
@@ -77,7 +83,7 @@ def handle_sales_conversation(prospect_id: str, message_text: str, channel: str 
             marque = v_parts[0] if v_parts else "Toyota"
             modele = " ".join(v_parts[1:]) if len(v_parts) > 1 else "Corolla"
             
-            p_name = prospect.get("name") or "Koffi"
+            p_name = prospect.get("name") if prospect.get("name") not in INVALID_NAMES else "Koffi"
             p_parts = p_name.split()
             nom_assure = p_parts[0] if p_parts else "Prospect"
             prenom_assure = p_parts[-1] if len(p_parts) > 1 else "Dossou"
@@ -110,7 +116,7 @@ def handle_sales_conversation(prospect_id: str, message_text: str, channel: str 
         prospect["intention"] = "Chaud 🔥"
     elif prospect.get("vehicle") or prospect.get("need"):
         prospect["intention"] = "Chaud 🔥"
-    elif prospect.get("name") and prospect.get("name") != "Prospect Inconnu":
+    elif prospect.get("name") and prospect.get("name").lower() not in INVALID_NAMES:
         prospect["intention"] = "Tiède ⏳"
     else:
         prospect["intention"] = "Froid ❄️"
@@ -146,10 +152,10 @@ def extract_dynamic_name(text: str) -> str:
         if match:
             candidate = match.group(1).strip().title()
             candidate_words = candidate.lower().split()
-            if not any(w in FRENCH_STOP_WORDS for w in candidate_words) and len(candidate) >= 3:
+            if not any(w in FRENCH_STOP_WORDS for w in candidate_words) and candidate.lower() not in INVALID_NAMES and len(candidate) >= 3:
                 return candidate
                 
-    words = [w for w in re.findall(r'\b[a-zA-Z]{3,20}\b', text_clean) if w.lower() not in FRENCH_STOP_WORDS]
+    words = [w for w in re.findall(r'\b[a-zA-Z]{3,20}\b', text_clean) if w.lower() not in FRENCH_STOP_WORDS and w.lower() not in INVALID_NAMES]
     if len(words) == 1:
         return words[0].title()
         
@@ -163,8 +169,9 @@ def re_search_phone(text: str) -> str:
 
 def update_lead_intelligence(prospect: dict, cfg: dict):
     summary_parts = [f"Entity: {cfg['entity']} ({cfg['name']})."]
-    if prospect["name"] != "Prospect Inconnu":
-        summary_parts.append(f"Prospect: {prospect['name']}.")
+    p_name = prospect.get("name", "")
+    if p_name and p_name.lower() not in INVALID_NAMES:
+        summary_parts.append(f"Prospect: {p_name}.")
     if prospect["channel"]:
         summary_parts.append(f"Canal: {prospect['channel']}.")
     if prospect["vehicle"]:
