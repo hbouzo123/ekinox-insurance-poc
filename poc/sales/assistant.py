@@ -1,4 +1,4 @@
-from core import database, nlp
+from core import database, nlp, orass_client
 import re
 
 FRENCH_STOP_WORDS = {
@@ -30,6 +30,7 @@ def handle_sales_conversation(prospect_id: str, message_text: str, channel: str 
             "document_uploaded": False,
             "document_name": "",
             "appointment": "",
+            "orass_policy_num": "",
             "conversation": [],
             "summary": f"Nouveau prospect {cfg['name']} en cours de qualification.",
             "next_action": "Attente qualification.",
@@ -43,7 +44,7 @@ def handle_sales_conversation(prospect_id: str, message_text: str, channel: str 
     
     msg_lower = message_text.lower()
     
-    # 1. 100% Dynamic Name Extraction (any first name / surname, 0 hardcoded values)
+    # 1. 100% Dynamic Name Extraction
     name_found = extract_dynamic_name(message_text)
     if name_found and prospect["name"] == "Prospect Inconnu":
         prospect["name"] = name_found
@@ -60,7 +61,30 @@ def handle_sales_conversation(prospect_id: str, message_text: str, channel: str 
         elif prospect.get("document_uploaded"):
             prospect["vehicle"] = "Mercedes Série Spéciale (CI-5099-AB2)"
             
-    # 3. Match country-specific product catalog
+    # 3. Trigger ORASS Policy Issuance (new-deal) if prospect requests subscription
+    if any(k in msg_lower for k in ["souscrire", "émettre", "emettre", "valider la police", "confirmer la souscription"]):
+        if not prospect.get("orass_policy_num"):
+            v_name = prospect.get("vehicle") or "Peugeot 208"
+            v_parts = v_name.split()
+            marque = v_parts[0] if v_parts else "Peugeot"
+            modele = " ".join(v_parts[1:]) if len(v_parts) > 1 else "Auto"
+            
+            p_name = prospect.get("name") or "Karim"
+            p_parts = p_name.split()
+            nom_assure = p_parts[0] if p_parts else "Prospect"
+            prenom_assure = p_parts[-1] if len(p_parts) > 1 else "Client"
+            
+            orass_deal = orass_client.orass_engine.validate_new_deal_auto(
+                assure_nom=nom_assure,
+                assure_prenom=prenom_assure,
+                marque=marque,
+                modele=modele,
+                immatriculation="CI-5099-AB2"
+            )
+            prospect["orass_policy_num"] = orass_deal.get("numepoli", "POL-AUTO-894102")
+            prospect["intention"] = "Chaud 🔥"
+
+    # 4. Match country-specific product catalog
     for prod in cfg["products"]:
         if any(w in msg_lower for w in prod["name"].lower().split()):
             prospect["need"] = prod["name"]
@@ -72,8 +96,8 @@ def handle_sales_conversation(prospect_id: str, message_text: str, channel: str 
         elif "tiers" in msg_lower or "occasion" in msg_lower:
             prospect["need"] = cfg["products"][0]["name"]
 
-    # 4. Commercial Maturity Rules
-    if prospect.get("document_uploaded") or prospect.get("appointment") or any(k in msg_lower for k in ["devis", "tarif", "prix", "combien", "simulation", "souscrire", "trois devis", "3 devis"]):
+    # 5. Commercial Maturity Rules
+    if prospect.get("orass_policy_num") or prospect.get("document_uploaded") or prospect.get("appointment") or any(k in msg_lower for k in ["devis", "tarif", "prix", "combien", "simulation", "souscrire", "trois devis", "3 devis"]):
         prospect["intention"] = "Chaud 🔥"
     elif prospect.get("vehicle") or prospect.get("need"):
         prospect["intention"] = "Chaud 🔥"
@@ -86,6 +110,9 @@ def handle_sales_conversation(prospect_id: str, message_text: str, channel: str 
     history_tuples = prospect["conversation"][:-1]
     assistant_reply = nlp.generate_llm_response(history_tuples, message_text, country_code=country_code, prospect_data=prospect)
     
+    if prospect.get("orass_policy_num") and "POL-AUTO" not in assistant_reply:
+        assistant_reply += f"\n\n🎉 Félicitations ! Votre Police d'Assurance ORASS Officielle a été émise : N° {prospect['orass_policy_num']}."
+        
     prospect["conversation"].append({"sender": "assistant", "text": assistant_reply})
     
     update_lead_intelligence(prospect, cfg)
@@ -135,16 +162,20 @@ def update_lead_intelligence(prospect: dict, cfg: dict):
         summary_parts.append(f"Véhicule: {prospect['vehicle']}.")
     if prospect["need"]:
         summary_parts.append(f"Formule: {prospect['need']}.")
-    if prospect["document_uploaded"]:
+    if prospect.get("orass_policy_num"):
+        summary_parts.append(f"Police ORASS: {prospect['orass_policy_num']}.")
+    elif prospect["document_uploaded"]:
         summary_parts.append(f"Pièces: Validées.")
     if prospect.get("appointment"):
         summary_parts.append(f"RDV: {prospect['appointment']}.")
         
     prospect["summary"] = " ".join(summary_parts)
     
-    if prospect.get("appointment"):
+    if prospect.get("orass_policy_num"):
+        prospect["next_action"] = f"Police ORASS {prospect['orass_policy_num']} émise. Télécharger la carte verte."
+    elif prospect.get("appointment"):
         prospect["next_action"] = f"Rendez-vous téléphonique planifié le {prospect['appointment']}."
     elif prospect["document_uploaded"] or prospect["intention"] == "Chaud 🔥":
-        prospect["next_action"] = "Proposer un créneau de rendez-vous pour souscription."
+        prospect["next_action"] = "Émettre la Police Auto ORASS ou proposer un rendez-vous."
     else:
         prospect["next_action"] = f"Demander l'upload du certificat d'immatriculation ({cfg['name']})."

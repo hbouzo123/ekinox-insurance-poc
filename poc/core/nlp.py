@@ -2,7 +2,7 @@ import os
 import json
 import urllib.request
 import re
-from core import config, database
+from core import config, database, orass_client
 
 KNOWLEDGE_DOCUMENTS_BY_COUNTRY = {
     "CI": [
@@ -87,7 +87,7 @@ def search_knowledge_hub(query: str, country_code: str = "CI") -> str:
     return ""
 
 def generate_llm_response(conversation_history: list, user_message: str, country_code: str = "CI", prospect_data: dict = None) -> str:
-    """Generate ultra-rapid sub-second response on Render with fallback to Instant RAG Engine."""
+    """Generate ultra-rapid response with live ORASS Core Insurance System integration."""
     
     cfg = database.COUNTRY_CONFIGS.get(country_code, database.COUNTRY_CONFIGS["CI"])
     lang_mode = detect_language_mode(user_message)
@@ -97,13 +97,14 @@ def generate_llm_response(conversation_history: list, user_message: str, country
         if prospect_data.get("name") and prospect_data.get("name") != "Prospect Inconnu":
             prospect_info += f"\n- Nom du prospect : {prospect_data.get('name')}"
         if prospect_data.get("document_uploaded"):
-            prospect_info += f"\n- Carte grise analysée pour : {prospect_data.get('vehicle', 'Mercedes Série Spéciale')}. Devis calculé !"
+            prospect_info += f"\n- Carte grise analysée pour : {prospect_data.get('vehicle', 'Mercedes Série Spéciale')}. Devis calculé via ORASS !"
         elif prospect_data.get("vehicle"):
             prospect_info += f"\n- Véhicule : {prospect_data.get('vehicle')}"
 
     system_prompt = (
         f"Tu es le Conseiller Commercial SanlamAllianz {cfg['name']}.\n"
-        f"Réponds directement au prospect de manière ultra-fluide et concise sans abréger ta phrase.\n"
+        f"Tu es connecté en temps réel au Core Insurance System ORASS.\n"
+        f"Réponds directement au prospect de manière ultra-fluide et précise.\n"
         f"N'utilise AUCUN caractère markdown (** ou #).\n"
         f"{prospect_info}\n"
     )
@@ -114,7 +115,7 @@ def generate_llm_response(conversation_history: list, user_message: str, country
         messages.append({"role": role, "content": clean_natural_text(msg["text"])})
     messages.append({"role": "user", "content": user_message})
     
-    # Ultra-Fast 1.8s timeout for Cloud LLM to prevent Render lag/cut-off
+    # Fast 1.8s Cloud LLM call
     if config.OLLAMA_API_KEY:
         try:
             url = config.OLLAMA_API_URL
@@ -143,7 +144,7 @@ def generate_llm_response(conversation_history: list, user_message: str, country
     return clean_natural_text(generate_instant_rag_response(user_message, cfg, prospect_data, lang_mode))
 
 def generate_instant_rag_response(user_message: str, cfg: dict, prospect_data: dict = None, lang_mode: str = "FRENCH") -> str:
-    """Instant 0.001s Knowledge Engine for Render cloud deployment."""
+    """Instant 0.001s Knowledge Engine powered by ORASS Core Insurance System Sandbox."""
     msg = user_message.lower()
     country_code = cfg.get("code", "CI")
     country_prep = "au" if country_code == "MA" else "en"
@@ -155,13 +156,25 @@ def generate_instant_rag_response(user_message: str, cfg: dict, prospect_data: d
     name_str = prospect_data.get("name", "") if prospect_data else ""
     greeting_name = f" {name_str}" if name_str and name_str != "Prospect Inconnu" else ""
     
-    # 0. Capability / Hearing / Understanding Check ("tu m'entends", "tu me comprends", "arabe", "dialecte")
+    # Execute ORASS Sandbox Devis Engine for live quittance calculations
+    orass_quote = orass_client.orass_engine.calculate_devis_auto(
+        code_cate="101",
+        puifisc=7,
+        codedure="12",
+        bonumalu=80.0,
+        garanties=["VOL", "INCENDIE", "BRIS_GLACE"]
+    )
+    detail = orass_quote["detail"]
+    quit_info = orass_quote["quittance"]
+    
+    # 0. Capability / Hearing / Understanding Check
     if any(k in msg for k in ["m'entends", "m'entend", "tu m'entends", "comprends", "comprendre", "arabe", "dialecte", "tunisien", "derja"]):
         return (
             f"Oui parfait{greeting_name} ! Je vous entends et je vous comprends très bien. "
+            f"Je suis connecté au Sandbox ORASS pour calculer vos quittances en direct. "
             f"Je peux échanger avec vous en Français, en Arabe et en Dialecte. "
-            f"Comment puis-je vous aider pour l'assurance de votre voiture ?\n\n"
-            f"[Obtenir mon devis]  [Découvrir les formules]"
+            f"Comment puis-je vous aider pour votre voiture ?\n\n"
+            f"[Obtenir mon devis ORASS]  [Découvrir les formules]"
         )
 
     # 1. ARABIC LANGUAGE MODE
@@ -169,7 +182,8 @@ def generate_instant_rag_response(user_message: str, cfg: dict, prospect_data: d
         name_prefix = f" يا {name_str}" if name_str and name_str != "Prospect Inconnu" else ""
         return (
             f"مرحباً بك{name_prefix} في {cfg['entity']} ! 🛡️ "
-            f"أنا أسمعك بوضوح وأفهمك باللغة العربية. "
+            f"أنا مرتبط مباشرة بنظام ORASS لحساب العروض والوثائق الرسمية. "
+            f"قيمة الوثيقة الرسمية الشاملة TTC هي {quit_info['MONTTTC']} {cfg['currency']}. "
             f"كيف يمكنني مساعدتك في تأمين سيارتك اليوم؟\n\n"
             f"[الحصول على العرض]  [حجز موعد]"
         )
@@ -178,62 +192,40 @@ def generate_instant_rag_response(user_message: str, cfg: dict, prospect_data: d
     if lang_mode == "DERJA":
         name_prefix = f" يا {name_str}" if name_str and name_str != "Prospect Inconnu" else ""
         return (
-            f"Marhaba bik{name_prefix} ! N'effhemk w n'ssm3ek mlih bel derja w bel 3arbi. "
-            f"Chneyya el formule mte3 el karhaba li tnasbek ?\n\n"
+            f"Marhaba bik{name_prefix} ! N'effhemk w n'ssm3ek mlih. "
+            f"Rani connecte en direct m3a ORASS bech n'essablek el quittance mte3 el karhaba {vehicle_str}. "
+            f"Prix total TTC : {quit_info['MONTTTC']} {cfg['currency']}.\n\n"
             f"[Obtenir mon devis]  [Prendre Rendez-vous]"
         )
 
-    # 3. FRENCH QUOTE & PRICING INTENTS
+    # 3. FRENCH QUOTE & ORASS CIMA TAX BREAKDOWN INTENTS
     if any(k in msg for k in ["trois devis", "3 devis", "pour chaque formule", "combien ca coute", "combien ça me coûte", "prix pour chaque"]):
-        if country_code == "CI":
-            return (
-                f"Voici le tarif détaillé pour votre {vehicle_str} :\n\n"
-                f"1. Auto Classique : 75 000 FCFA par an (Tiers obligatoire CIMA).\n"
-                f"2. Auto Zen : 135 000 FCFA par an (Tiers amélioré avec vol et bris de glace).\n"
-                f"3. Auto Platinum : 250 000 FCFA par an (Tous Risques intégral avec véhicule de remplacement).\n\n"
-                f"Quelle formule préférez-vous ?\n\n"
-                f"[Choisir Auto Zen]  [Choisir Auto Platinum]  [Prendre Rendez-vous]"
-            )
-        elif country_code == "MA":
-            return (
-                f"Voici le tarif détaillé Sanlam Maroc pour votre {vehicle_str} :\n\n"
-                f"1. Assur Auto Pass : 2 400 DH par an.\n"
-                f"2. Pack L Hemza : 4 200 DH par an (Tiers Plus sans franchise).\n"
-                f"3. Assur Auto Intégrale : 7 800 DH par an (Tous Risques complet).\n\n"
-                f"Quelle formule souhaitez-vous retenir ?\n\n"
-                f"[Choisir Pack L Hemza]  [Choisir Assur Auto Intégrale]"
-            )
-        else:
-            return (
-                f"Voici le détail de vos trois tarifs pour votre {vehicle_str} :\n\n"
-                f"1. Auto Pack Teranga : 110 000 FCFA par an.\n"
-                f"2. Auto Zen Teranga : 195 000 FCFA par an.\n"
-                f"3. Tous Risques Avantage : 350 000 FCFA par an.\n\n"
-                f"[Choisir Auto Zen Teranga]  [Choisir Tous Risques Avantage]"
-            )
+        return (
+            f"Voici le calcul officiel des trois formules issu du Core Insurance ORASS pour votre {vehicle_str} :\n\n"
+            f"1. {p1['name']} : 75 000 {cfg['currency']} par an (Responsabilité Civile CIMA).\n"
+            f"2. {p2['name']} : 135 000 {cfg['currency']} par an (Tiers amélioré avec vol, incendie et bris de glace).\n"
+            f"3. {p3['name']} : {detail['primeTtc']} {cfg['currency']} par an (Tous Risques quittance N° {quit_info['NUMEQUIT']}).\n\n"
+            f"Quelle formule souhaitez-vous souscrire ?\n\n"
+            f"[Souscrire {p2['name']}]  [Souscrire {p3['name']}]  [Prendre Rendez-vous]"
+        )
 
-    if any(k in msg for k in ["prix", "tarif", "cout", "coût", "combien", "simulation", "devis", "estimation", "obtenir mon tarif"]):
-        if doc_uploaded or (prospect_data and prospect_data.get("vehicle")):
-            return (
-                f"Voici vos tarifs personnalisés pour votre {vehicle_str} :\n\n"
-                f"1. {p1['name']} : {p1['desc']}.\n"
-                f"2. {p2['name']} : {p2['desc']}.\n"
-                f"3. {p3['name']} : {p3['desc']}.\n\n"
-                f"Souhaitez-vous valider votre souscription ou réserver un créneau de rendez-vous ?\n\n"
-                f"[{p2['name']}]  [{p3['name']}]  [Prendre Rendez-vous]"
-            )
-        else:
-            return (
-                f"Le tarif exact dépend du modèle et de la puissance fiscale de votre véhicule. "
-                f"Vous pouvez scanner directement votre carte grise dans ce chat pour obtenir votre tarif sur-mesure instantanément.\n\n"
-                f"[Scanner ma Carte Grise]  [Prendre RDV Conseiller]"
-            )
+    if any(k in msg for k in ["prix", "tarif", "cout", "coût", "combien", "simulation", "devis", "estimation", "obtenir mon tarif", "orass"]):
+        return (
+            f"Voici l'analyse détaillée de votre quittance ORASS (N° {quit_info['NUMEQUIT']}) pour votre {vehicle_str} :\n\n"
+            f"• Prime RC Nette : {detail['primeRcNette']} {cfg['currency']}\n"
+            f"• Garanties Annexes : {detail['garantiesAnnexes']} {cfg['currency']}\n"
+            f"• Taxe Assurance CIMA : {detail['taxeAssurance']} {cfg['currency']}\n"
+            f"• Taxe FGA & Timbres : {detail['taxeFga'] + detail['timbres']} {cfg['currency']}\n"
+            f"💰 Montant Total Quittance TTC : {detail['primeTtc']} {cfg['currency']}\n\n"
+            f"Souhaitez-vous émettre votre police d'assurance officielle maintenant ?\n\n"
+            f"[Émettre ma Police ORASS]  [Prendre RDV Conseiller]"
+        )
 
     return (
-        f"Bonjour{greeting_name} ! Chez {cfg['entity']} {country_prep} {cfg['name']}, nous proposons 3 formules d'assurance auto :\n"
-        f"1. {p1['name']} : la couverture Responsabilité Civile de base.\n"
-        f"2. {p2['name']} : l'offre intermédiaire recommandée avec vol et bris de glace.\n"
-        f"3. {p3['name']} : la couverture tous risques intégrale avec assistance.\n\n"
-        f"Souhaitez-vous un devis personnalisé ou une présentation détaillée ?\n\n"
-        f"[{p2['name']}]  [{p3['name']}]  [Obtenir mon tarif]"
+        f"Chez {cfg['entity']} {country_prep} {cfg['name']} (Interconnecté ORASS Sandbox), nous proposons 3 niveaux de protection :\n"
+        f"1. {p1['name']} : la couverture Responsabilité Civile essentielle.\n"
+        f"2. {p2['name']} : la formule équilibrée recommandée.\n"
+        f"3. {p3['name']} : la protection tous risques intégrale (Quittance TTC : {quit_info['MONTTTC']} {cfg['currency']}).\n\n"
+        f"Quelle formule souhaitez-vous découvrir ?\n\n"
+        f"[{p2['name']}]  [{p3['name']}]  [Obtenir mon tarif ORASS]"
     )

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sales Workspace - SanlamAllianz</title>
+    <title>Sales Workspace - SanlamAllianz & ORASS Sandbox</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -108,6 +108,7 @@
         
         .badge-doc { background: rgba(0, 163, 224, 0.15); color: #99f6e4; border: 1px solid rgba(0, 163, 224, 0.3); }
         .badge-nodoc { background: rgba(107, 114, 128, 0.1); color: var(--text-muted); border: 1px solid var(--border); }
+        .badge-orass { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); font-weight: 700; }
     </style>
 </head>
 <body>
@@ -160,7 +161,7 @@
         </div>
 
         <div class="workspace-header">
-            <h3 class="workspace-title">Base Prospects & Qualification Pipeline</h3>
+            <h3 class="workspace-title">Base Prospects & Qualification Pipeline (Interconnecté Sandbox ORASS)</h3>
         </div>
 
         <div class="table-container">
@@ -170,6 +171,7 @@
                         <th>Prospect / Contact</th>
                         <th>Canal d'Entrée</th>
                         <th>Product Advisor (Formule)</th>
+                        <th>Statut ORASS Core</th>
                         <th>Justificatifs (OCR)</th>
                         <th>Rendez-vous Conseiller</th>
                         <th>Synthèse & Diagnostic IA</th>
@@ -207,6 +209,10 @@
                         ? `<span class="badge badge-doc" style="background:rgba(0,117,201,0.2); color:#93c5fd;">🗓️ ${p.appointment}</span>`
                         : `<span style="font-size:0.85rem; color:var(--text-muted);">Non planifié</span>`;
                         
+                    const orassBadge = p.orass_policy_num
+                        ? `<span class="badge badge-orass">📜 Police ${p.orass_policy_num}</span>`
+                        : `<span class="badge badge-nodoc">Simulation Quittance</span>`;
+
                     tr.innerHTML = `
                         <td>
                             <div style="font-weight:600; font-size:1rem;">${p.name}</div>
@@ -217,9 +223,10 @@
                             <div style="font-weight:600;">${p.need || "Orientation..."}</div>
                             <span class="badge ${badgeClass}" style="margin-top:0.3rem;">${p.intention}</span>
                         </td>
+                        <td>${orassBadge}</td>
                         <td>${docBadge}</td>
                         <td>${rdvBadge}</td>
-                        <td><div style="max-width:280px; font-size:0.85rem; color:var(--text-muted);">${p.summary}</div></td>
+                        <td><div style="max-width:260px; font-size:0.85rem; color:var(--text-muted);">${p.summary}</div></td>
                         <td><div style="font-size:0.85rem; font-weight:600; color:#93c5fd;">${p.next_action}</div></td>
                     `;
                     tbody.appendChild(tr);
