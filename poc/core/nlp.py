@@ -267,7 +267,27 @@ def generate_instant_rag_response(user_message: str, cfg: dict, prospect_data: d
     valid_name = raw_name if raw_name not in ["Prospect Inconnu", "Document", "Fichier", "Carte Grise", "Pdf", "Platinium", "Platinum"] else ""
     greeting_name = f" {valid_name}" if valid_name else ""
 
-    # 1. INSURANCE COVERAGE QUESTIONS ("L'assurance RC, elle couvre quoi exactement ?")
+    # 1. GREETINGS & IDENTITY QUESTIONS ("comment vas-tu", "comment t'appelles-tu", "qui es-tu")
+    if any(k in msg for k in ["comment vas-tu", "comment t'appelles", "t'appelles-tu", "qui es-tu", "ton nom", "comment tu t'appelles"]):
+        return (
+            f"Je vais très bien, merci ! 😊 Je suis votre Conseiller Commercial Virtuel {cfg['entity']} {country_prep} {cfg['name']}.\n\n"
+            f"Je suis là pour vous accompagner, répondre à toutes vos questions sur l'assurance de votre voiture et vous établir vos devis sur-mesure.\n\n"
+            f"Comment puis-je vous aider aujourd'hui ?\n\n"
+            f"[📊 Faire une simulation]  [📄 Envoyer ma Carte Grise]"
+        )
+
+    # 2. SPECIFIC RC / TIERS TARIFF ESTIMATION ("juste une estimation du RC", "estimation rc", "tarif rc")
+    if any(k in msg for k in ["estimation du rc", "estimation rc", "tarif rc", "prix rc", "juste la rc", "tiers classique", "pas du platinum"]):
+        return (
+            f"Absolument ! Voici l'estimation de votre formule **{p1['name']}** (Responsabilité Civile CIMA) pour votre {vehicle_str} au {cfg['name']} :\n\n"
+            f"• Prime RC Obligatoire CIMA : 55 600 FCFA\n"
+            f"• Défense & Recours + Assistance dépannage : 19 400 FCFA\n"
+            f"💰 Montant Total Devis TTC : 75 000 FCFA par an\n\n"
+            f"Souhaitez-vous souscrire cette formule ou la comparer avec la formule Tiers Plus ({p2['name']}) ?\n\n"
+            f"[Souscrire Auto Classique (75k FCFA)]  [Découvrir Auto Zen]  [Payer via MTN MoMo]"
+        )
+
+    # 3. INSURANCE COVERAGE QUESTIONS ("L'assurance RC, elle couvre quoi exactement ?")
     if any(k in msg for k in ["couvre quoi", "c'est quoi la rc", "responsabilité civile", "garanties", "couvre exactement", "couverture rc", "que couvre"]):
         return (
             f"L'assurance Responsabilité Civile (RC) obligatoire CIMA {country_prep} {cfg['name']} indemnise l'intégralité des dommages matériels et corporels causés aux tiers lors d'un accident avec {vehicle_str}.\n\n"
@@ -276,7 +296,7 @@ def generate_instant_rag_response(user_message: str, cfg: dict, prospect_data: d
             f"[{p2['name']}]  [{p3['name']}]  [Obtenir mon Devis Officiel]"
         )
 
-    # 2. VALUATION & FORMULA SELECTION EXPLANATION
+    # 4. VALUATION & FORMULA SELECTION EXPLANATION
     if any(k in msg for k in ["calculé la valeur", "valeur de la voiture", "pas fait le choix", "pas demandé", "pas choisi"]):
         return (
             f"Je vous comprends tout à fait{greeting_name} ! 🚗\n\n"
@@ -286,7 +306,7 @@ def generate_instant_rag_response(user_message: str, cfg: dict, prospect_data: d
             f"[{p1['name']}]  [{p2['name']}]  [{p3['name']}]"
         )
 
-    # 3. META-DIALOGUE / LISTENING FEEDBACK
+    # 5. META-DIALOGUE / LISTENING FEEDBACK
     if any(k in msg for k in ["comprennes la question", "écoutes", "n'hésite pas à demander", "pas compris", "écouter"]):
         return (
             f"Toutes mes excuses{greeting_name} ! 🤝 Vous avez tout à fait raison. Je vous écoute très attentivement.\n\n"
@@ -294,7 +314,7 @@ def generate_instant_rag_response(user_message: str, cfg: dict, prospect_data: d
             f"[Posez votre question]  [Comparer les formules]"
         )
 
-    # 4. DEFAULT CONVERSATIONAL RESPONSE
+    # 6. DEFAULT CONVERSATIONAL RESPONSE
     return (
         f"Je suis votre Conseiller Commercial {cfg['entity']} {country_prep} {cfg['name']}. "
         f"Je peux répondre à toutes vos questions sur les garanties, l'assurance de votre {vehicle_str} ou vous aider à choisir la formule idéale.\n\n"
