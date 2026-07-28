@@ -84,19 +84,6 @@
         .hero h1 { font-size: 2.8rem; font-weight: 800; margin-bottom: 0.8rem; background: linear-gradient(to right, #ffffff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .hero p { color: var(--text-muted); font-size: 1.15rem; line-height: 1.6; }
 
-        .country-badge-bar {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.8rem;
-            background: rgba(0, 163, 224, 0.1);
-            border: 1px solid rgba(0, 163, 224, 0.3);
-            padding: 0.6rem 1.5rem;
-            border-radius: 2rem;
-            margin-top: 1rem;
-            font-size: 0.95rem;
-            color: #99f6e4;
-        }
-
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 2.5rem; }
 
         .card {
@@ -153,7 +140,7 @@
             </svg>
         </a>
         
-        <!-- Country Context Switcher -->
+        <!-- Country Context Switcher (Single Unique Location Top-Right Header) -->
         <div class="country-selector">
             <span style="font-size:0.9rem; color:var(--text-muted);">Contexte Pays :</span>
             <select id="country-select" onchange="switchCountry()">
@@ -169,13 +156,6 @@
         <div class="hero">
             <h1>Ekinox SanlamAllianz Platform</h1>
             <p>Accélérateurs digitaux d'assurance auto pour <strong>{{ country.entity }}</strong> au/en <strong>{{ country.name }}</strong>.</p>
-            <div class="country-badge-bar">
-                <span>{{ country.flag }} Réglementation : <strong>{{ country.regulatory_body }}</strong></span>
-                <span>| Monnaie : <strong>{{ country.currency }}</strong></span>
-                {% if country.code == 'BJ' %}
-                <span>| ⚡ <strong>Sandbox ORASS Actif</strong></span>
-                {% endif %}
-            </div>
         </div>
 
         <div class="grid">
