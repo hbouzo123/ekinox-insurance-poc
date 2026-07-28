@@ -61,7 +61,15 @@ def handle_sales_conversation(prospect_id: str, message_text: str, channel: str 
         elif prospect.get("document_uploaded"):
             prospect["vehicle"] = "Toyota Corolla (RB-1234-AB)" if country_code == "BJ" else "Mercedes Série Spéciale"
             
-    # 3. Trigger ORASS Policy Issuance (new-deal) ONLY IF COUNTRY IS BENIN (BJ)
+    # 3. Handle Ordinal Formula Queries ("La 3e ?", "la 3eme", "la 2e")
+    if any(k in msg_lower for k in ["3e", "3ème", "3eme", "troisième", "troisieme", "la 3", "formule 3"]):
+        prospect["need"] = cfg["products"][-1]["name"]
+    elif any(k in msg_lower for k in ["2e", "2ème", "2eme", "deuxième", "deuxieme", "la 2", "formule 2"]):
+        prospect["need"] = cfg["products"][1]["name"]
+    elif any(k in msg_lower for k in ["1ere", "1ère", "première", "premiere", "la 1", "formule 1"]):
+        prospect["need"] = cfg["products"][0]["name"]
+
+    # 4. Trigger ORASS Policy Issuance (new-deal) ONLY IF COUNTRY IS BENIN (BJ)
     if country_code == "BJ" and any(k in msg_lower for k in ["souscrire", "émettre", "emettre", "valider la police", "confirmer la souscription"]):
         if not prospect.get("orass_policy_num"):
             v_name = prospect.get("vehicle") or "Toyota Corolla"
@@ -84,11 +92,12 @@ def handle_sales_conversation(prospect_id: str, message_text: str, channel: str 
             prospect["orass_policy_num"] = orass_deal.get("numepoli", "POL-AUTO-BENIN-894102")
             prospect["intention"] = "Chaud 🔥"
 
-    # 4. Match country-specific product catalog
-    for prod in cfg["products"]:
-        if any(w in msg_lower for w in prod["name"].lower().split()):
-            prospect["need"] = prod["name"]
-            break
+    # 5. Match country-specific product catalog
+    if not prospect["need"]:
+        for prod in cfg["products"]:
+            if any(w in msg_lower for w in prod["name"].lower().split()):
+                prospect["need"] = prod["name"]
+                break
             
     if not prospect["need"]:
         if "tous risques" in msg_lower or "neuf" in msg_lower or "neuve" in msg_lower or "platinum" in msg_lower:
@@ -96,7 +105,7 @@ def handle_sales_conversation(prospect_id: str, message_text: str, channel: str 
         elif "tiers" in msg_lower or "occasion" in msg_lower:
             prospect["need"] = cfg["products"][0]["name"]
 
-    # 5. Commercial Maturity Rules
+    # 6. Commercial Maturity Rules
     if prospect.get("orass_policy_num") or prospect.get("document_uploaded") or prospect.get("appointment") or any(k in msg_lower for k in ["devis", "tarif", "prix", "combien", "simulation", "souscrire", "trois devis", "3 devis"]):
         prospect["intention"] = "Chaud 🔥"
     elif prospect.get("vehicle") or prospect.get("need"):
