@@ -1,6 +1,22 @@
 # Country-Specific Catalogs & Localizations for SanlamAllianz
 
 COUNTRY_CONFIGS = {
+    "BJ": {
+        "code": "BJ",
+        "name": "Bénin",
+        "flag": "🇧🇯",
+        "entity": "SanlamAllianz Bénin",
+        "currency": "FCFA",
+        "currency_symbol": "FCFA",
+        "regulatory_body": "Code CIMA Bénin & ARCA",
+        "products": [
+            {"id": "bj-p1", "name": "Auto Classique (Tiers)", "desc": "Responsabilité Civile obligatoire CIMA Bénin + Défense Recours", "recommended_for": "Occasion"},
+            {"id": "bj-p2", "name": "Auto Zen (Tiers Amélioré)", "desc": "Tiers + Vol + Incendie + Bris de glace avec assistance Cotonou/Porto-Novo", "recommended_for": "Usage quotidien"},
+            {"id": "bj-p3", "name": "Auto Platinum (Tous Risques ORASS)", "desc": "Couverture intégrale 0 km, dommages tous accidents et véhicule de remplacement", "recommended_for": "Véhicule Neuf"}
+        ],
+        "default_garage": "Réseau Auto Sanlam Cotonou - Avenue Jean-Paul II, Haie Vive",
+        "standard_franchise": 45000
+    },
     "CI": {
         "code": "CI",
         "name": "Côte d'Ivoire",
@@ -53,6 +69,28 @@ COUNTRY_CONFIGS = {
 
 # Country-Specific Mock Prospects Pipeline
 PROSPECTS_BY_COUNTRY = {
+    "BJ": {
+        "lead-bj-1": {
+            "id": "lead-bj-1",
+            "country": "BJ",
+            "name": "Koffi Bio Dossou",
+            "phone": "+229 97 12 34 56",
+            "channel": "WhatsApp",
+            "vehicle": "Toyota Corolla (2023) - Cotonou",
+            "need": "Auto Platinum (Tous Risques ORASS)",
+            "intention": "Chaud 🔥",
+            "document_uploaded": True,
+            "document_name": "carte_grise_dossou.pdf",
+            "appointment": "2026-07-29 à 11:00",
+            "orass_policy_num": "POL-AUTO-BENIN-889102",
+            "conversation": [
+                {"sender": "user", "text": "Bonjour, je suis Dossou à Cotonou. Je veux assurer ma Toyota Corolla neuve immatriculée RB-1234-AB."},
+                {"sender": "assistant", "text": "Bonjour M. Dossou ! Bienvenue chez SanlamAllianz Bénin. Votre quittance ORASS N° QUIT-781920 a été calculée sous le Code CIMA. Votre police N° POL-AUTO-BENIN-889102 a été émise avec succès."}
+            ],
+            "summary": "Prospect Koffi Bio Dossou (Cotonou, Bénin), Toyota Corolla (RB-1234-AB). Police ORASS POL-AUTO-BENIN-889102 validée.",
+            "next_action": "Télécharger l'attestation CIMA Bénin et la carte verte."
+        }
+    },
     "CI": {
         "lead-ci-1": {
             "id": "lead-ci-1",
@@ -68,28 +106,10 @@ PROSPECTS_BY_COUNTRY = {
             "appointment": "2026-07-25 à 14:30",
             "conversation": [
                 {"sender": "user", "text": "Bonjour, je souhaite assurer mon pick-up Toyota Hilux neuf à Abidjan."},
-                {"sender": "assistant", "text": "Bonjour M. Kouassi ! Pour votre Hilux neuf à Abidjan, nous vous recommandons notre formule **Auto Platinum (Tous Risques)** sous le Code CIMA. Elle inclut la protection dommages tous accidents et l'assistance 0 km H24."}
+                {"sender": "assistant", "text": "Bonjour M. Kouassi ! Pour votre Hilux neuf à Abidjan, nous vous recommandons notre formule Auto Platinum (Tous Risques) sous le Code CIMA."}
             ],
             "summary": "Prospect Jean-Marc Kouassi (Abidjan), Toyota Hilux neuf. Formule souscrite: Auto Platinum. Carte grise validée.",
             "next_action": "Rendez-vous téléphonique confirmé pour le 2026-07-25 à 14:30."
-        },
-        "lead-ci-2": {
-            "id": "lead-ci-2",
-            "country": "CI",
-            "name": "Awa Traoré",
-            "phone": "+225 05 01 02 03 04",
-            "channel": "Meta Ads",
-            "vehicle": "Peugeot 208 (2021) - Trajets Cocody",
-            "need": "Auto Zen (Tiers Amélioré)",
-            "intention": "Tiède ⏳",
-            "document_uploaded": False,
-            "document_name": "",
-            "appointment": "",
-            "conversation": [
-                {"sender": "user", "text": "Bonjour, quel est le prix pour une Peugeot 208 ?"}
-            ],
-            "summary": "Prospect Awa Traoré (Cocody), Peugeot 208. Recommandation: Auto Zen.",
-            "next_action": "Relancer par SMS pour l'upload du justificatif d'identité."
         }
     },
     "MA": {
@@ -106,8 +126,7 @@ PROSPECTS_BY_COUNTRY = {
             "document_name": "carte_grise_benjelloun.pdf",
             "appointment": "2026-07-26 à 10:00",
             "conversation": [
-                {"sender": "user", "text": "Salam, je cherche une assurance Tous Risques avec rachat de franchise sur Casablanca."},
-                {"sender": "assistant", "text": "Salam M. Benjelloun ! Notre formule **Assur'Auto Intégrale** Sanlam Maroc est parfaitement adaptée. Elle inclut l'option Rachat de Franchise et la garantie décès toutes causes conforme aux directives ACAPS."}
+                {"sender": "user", "text": "Salam, je cherche une assurance Tous Risques avec rachat de franchise sur Casablanca."}
             ],
             "summary": "Prospect Youssef Benjelloun (Casablanca), Renault Clio 5. Formule: Assur'Auto Intégrale. Carte grise validée.",
             "next_action": "Rendez-vous agence Casablanca confirmé pour le 2026-07-26 à 10:00."
@@ -126,10 +145,7 @@ PROSPECTS_BY_COUNTRY = {
             "document_uploaded": True,
             "document_name": "carte_grise_ndiaye.pdf",
             "appointment": "2026-07-27 à 16:00",
-            "conversation": [
-                {"sender": "user", "text": "Na redef ! Devis pour Nissan Qashqai sur Dakar."},
-                {"sender": "assistant", "text": "Dalal ak jamm M. Ndiaye ! Pour votre Nissan Qashqai à Dakar, la formule **Tous Risques Avantage** SanlamAllianz Sénégal vous offre la meilleure couverture dommages avec secours Teranga H24."}
-            ],
+            "conversation": [],
             "summary": "Prospect Moustapha Ndiaye (Dakar), Nissan Qashqai. Formule: Tous Risques Avantage. Carte grise validée.",
             "next_action": "Appel commercial prévu le 2026-07-27 à 16:00."
         }
@@ -138,6 +154,27 @@ PROSPECTS_BY_COUNTRY = {
 
 # Country-Specific Mock Claims
 CLAIMS_BY_COUNTRY = {
+    "BJ": {
+        "claim-bj-101": {
+            "id": "claim-bj-101",
+            "country": "BJ",
+            "insured_name": "Bio Gounou",
+            "vehicle": "Toyota RAV4 (2022)",
+            "date": "2026-07-20",
+            "circumstances": "Collision déclarée au carrefour Étoile Cotonou.",
+            "cost": 6200000, # FCFA
+            "score": 82,
+            "status": "Enquête",
+            "expert_report": "Rapport d'expertise SanlamAllianz Bénin : Déformations non conformes au choc frontal sur l'Avenue Jean-Paul II Cotonou. Facture surévaluée du Garage Atlantique Cotonou.",
+            "flags": [
+                "Incohérence déclarative CIMA (Carrefour Étoile Cotonou)",
+                "Prestataire suspect (Garage Atlantique Cotonou)",
+                "Montant élevé (6.2M FCFA)"
+            ],
+            "explanation": "Score de risque de 82/100 sous réglementation CIMA Bénin.",
+            "comments": []
+        }
+    },
     "CI": {
         "claim-ci-101": {
             "id": "claim-ci-101",
@@ -146,19 +183,13 @@ CLAIMS_BY_COUNTRY = {
             "vehicle": "Hyundai Tucson (2022)",
             "date": "2026-07-12",
             "circumstances": "Collision frontale simulée au carrefour de Treichville.",
-            "cost": 8500000, # FCFA
+            "cost": 8500000,
             "score": 85,
             "status": "Enquête",
-            "expert_report": "Rapport expert : Les déformations sur la Hyundai Tucson à Abidjan ne correspondent pas à un choc statique. Facture du Garage Auto Marcory présentant un montant de 8.5M FCFA manifestement surévalué pour le pare-choc.",
-            "flags": [
-                "Incohérence déclarative CIMA (Choc Treichville)",
-                "Garage suspect (Auto Marcory - Récurence de surfacturations FCFA)",
-                "Montant financier anormalement élevé (8.5M FCFA)"
-            ],
-            "explanation": "Score de risque de 85/100 sous réglementation CIMA. 1° Incohérence cinématique relevée par l'expert. 2° Garagiste sous surveillance pour surfacturations récurrentes sur Abidjan.",
-            "comments": [
-                {"author": "Enquêteur Abidjan", "text": "Vérification des pièces de rechange au garage d'Abidjan.", "date": "2026-07-15"}
-            ]
+            "expert_report": "Rapport expert : Les déformations sur la Hyundai Tucson à Abidjan ne correspondent pas à un choc statique.",
+            "flags": ["Incohérence déclarative CIMA (Choc Treichville)"],
+            "explanation": "Score de risque de 85/100.",
+            "comments": []
         }
     },
     "MA": {
@@ -169,19 +200,13 @@ CLAIMS_BY_COUNTRY = {
             "vehicle": "BMW Série 3 (2021)",
             "date": "2026-07-10",
             "circumstances": "Choc arrière dans un parking à Casablanca Maarif.",
-            "cost": 125000, # MAD
+            "cost": 125000,
             "score": 88,
             "status": "Enquête",
-            "expert_report": "Rapport d'expertise Sanlam Maroc : Déformations dynamiques sur voie publique déguisées en choc parking Maarif. Coût estimé par le garage de 125 000 DH dépassant les barèmes ACAPS.",
-            "flags": [
-                "Incohérence déclarative ACAPS (Casablanca)",
-                "Garage suspect (Garage Prestige Casablanca)",
-                "Montant financier élevé (125 000 DH)"
-            ],
-            "explanation": "Score de risque élevé de 88/100 sous contrôle ACAPS. 1° Fausse déclaration de lieu de collision. 2° Garage sous alerte d'audit financier à Casablanca.",
-            "comments": [
-                {"author": "Enquêteur Casablanca", "text": "Convocation de l'assuré pour expertise contradictoire.", "date": "2026-07-14"}
-            ]
+            "expert_report": "Rapport d'expertise Sanlam Maroc : Déformations dynamiques sur voie publique déguisées en choc parking Maarif.",
+            "flags": ["Incohérence déclarative ACAPS (Casablanca)"],
+            "explanation": "Score de risque élevé de 88/100.",
+            "comments": []
         }
     },
     "SN": {
@@ -192,43 +217,38 @@ CLAIMS_BY_COUNTRY = {
             "vehicle": "Peugeot 301 (2020)",
             "date": "2026-07-14",
             "circumstances": "Vol de véhicule déclaré à Dakar Corniche.",
-            "cost": 9200000, # FCFA
+            "cost": 9200000,
             "score": 78,
             "status": "Enquête",
-            "expert_report": "Rapport expert Dakar : Vol déclaré 12 jours seulement après la souscription du contrat CIMA. Re-programmation suspecte du transpondeur de clé.",
-            "flags": [
-                "Sinistralité précoce CIMA (12 jours après souscription)",
-                "Anomalie clé électronique transpondeur"
-            ],
-            "explanation": "Score de 78/100. Alerte automatique sur sinistralité ultra-précoce sous Code CIMA Sénégal.",
+            "expert_report": "Rapport expert Dakar : Vol déclaré 12 jours seulement après la souscription du contrat CIMA.",
+            "flags": ["Sinistralité précoce CIMA"],
+            "explanation": "Score de 78/100.",
             "comments": []
         }
     }
 }
 
 # Global State Containers
-ACTIVE_COUNTRY = "CI"
-PROSPECTS = dict(PROSPECTS_BY_COUNTRY["CI"])
-CLAIMS = dict(CLAIMS_BY_COUNTRY["CI"])
+ACTIVE_COUNTRY = "BJ"
+PROSPECTS = dict(PROSPECTS_BY_COUNTRY["BJ"])
+CLAIMS = dict(CLAIMS_BY_COUNTRY["BJ"])
 
 NETWORK_DATA = {
     "nodes": [
-        {"id": "claim-101", "label": "Sinistre #101", "group": "claim", "title": "Dossier sous investigation"},
-        {"id": "user-marc", "label": "Assuré", "group": "insured", "title": "Profil sous alerte"},
-        {"id": "garage-prestige", "label": "Garage Partenaire Suspect", "group": "garage", "title": "Garage sous surveillance"},
-        {"id": "phone-shared", "label": "Tél +225/212 Partagé", "group": "phone", "title": "Lien réseau décelé"},
-        {"id": "expert-lab", "label": "Expertise Technique", "group": "expert", "title": "Rapport sémantique"}
+        {"id": "claim-101", "label": "Sinistre #101 Cotonou", "group": "claim", "title": "Dossier sous alerte"},
+        {"id": "user-marc", "label": "Assuré Bénin", "group": "insured", "title": "Profil sous surveillance"},
+        {"id": "garage-prestige", "label": "Garage Atlantique Cotonou", "group": "garage", "title": "Garagiste sous alerte"},
+        {"id": "phone-shared", "label": "Tél +229 Partagé", "group": "phone", "title": "Lien réseau décelé"}
     ],
     "edges": [
         {"from": "claim-101", "to": "user-marc", "label": "Déclaré par"},
         {"from": "claim-101", "to": "garage-prestige", "label": "Réparateur facturé"},
-        {"from": "user-marc", "to": "phone-shared", "label": "Contact identique"},
-        {"from": "claim-101", "to": "expert-lab", "label": "Analysé par"}
+        {"from": "user-marc", "to": "phone-shared", "label": "Contact identique"}
     ]
 }
 
 def set_active_country(country_code: str):
-    """Switch global active country (CI, MA, SN)."""
+    """Switch global active country (BJ, CI, MA, SN)."""
     global ACTIVE_COUNTRY, PROSPECTS, CLAIMS
     if country_code in COUNTRY_CONFIGS:
         ACTIVE_COUNTRY = country_code
@@ -238,4 +258,4 @@ def set_active_country(country_code: str):
         CLAIMS.update(CLAIMS_BY_COUNTRY.get(country_code, {}))
         print(f"[Database Core] Switched active country context to: {country_code} ({COUNTRY_CONFIGS[country_code]['name']})")
         return COUNTRY_CONFIGS[country_code]
-    return COUNTRY_CONFIGS["CI"]
+    return COUNTRY_CONFIGS["BJ"]

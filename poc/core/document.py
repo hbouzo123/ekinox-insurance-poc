@@ -3,7 +3,6 @@ import re
 import tempfile
 from core import database
 
-# Lazy-loaded EasyOCR reader instance
 _EASYOCR_READER = None
 
 def get_ocr_reader():
@@ -50,11 +49,9 @@ def extract_image_text_easyocr(file_path: str) -> str:
 
 def process_uploaded_document(file_name: str, file_content: bytes) -> dict:
     """Read document, perform OCR text extraction, classify type & country, and auto-switch context."""
-    
     file_ext = os.path.splitext(file_name)[1].lower()
     ocr_text = ""
     
-    # Save temporarily to disk for processing
     with tempfile.NamedTemporaryFile(delete=False, suffix=file_ext) as tmp:
         tmp.write(file_content)
         tmp_path = tmp.name
@@ -68,34 +65,30 @@ def process_uploaded_document(file_name: str, file_content: bytes) -> dict:
         if os.path.exists(tmp_path):
             os.remove(tmp_path)
             
-    # Combine filename and OCR text for classification
     full_text = f"{file_name} {ocr_text}".lower()
     
-    # 1. Document Type Detection
     doc_type = "Justificatif Divers"
     if any(k in full_text for k in ["immatriculation", "carte grise", "châssis", "chassis", "vehicule", "véhicule", "puissance", "matricule", "grise"]):
         doc_type = "Carte Grise (Certificat d'Immatriculation)"
     elif any(k in full_text for k in ["identité", "identite", "cni", "cnie", "cin", "passeport", "passport", "nationalité", "nationalite"]):
         doc_type = "Carte Nationale d'Identité"
 
-    # 2. Country Origin Detection (Côte d'Ivoire, Maroc, Sénégal)
-    detected_country = database.ACTIVE_COUNTRY # default
-    if any(k in full_text for k in ["côte d'ivoire", "cote d'ivoire", "abidjan", "oneci", "ci-", "kouassi", "diarra"]):
+    detected_country = database.ACTIVE_COUNTRY
+    if any(k in full_text for k in ["bénin", "benin", "cotonou", "porto-novo", "parakou", "rb-", "dossou", "gounou"]):
+        detected_country = "BJ"
+    elif any(k in full_text for k in ["côte d'ivoire", "cote d'ivoire", "abidjan", "oneci", "ci-", "kouassi", "diarra"]):
         detected_country = "CI"
     elif any(k in full_text for k in ["maroc", "royaume du maroc", "casablanca", "rabat", "acaps", "cin", "cnie", "benjelloun", "amrani", "dirham", "mad"]):
         detected_country = "MA"
     elif any(k in full_text for k in ["sénégal", "senegal", "dakar", "cedeao", "ndiaye", "sow", "dk-"]):
         detected_country = "SN"
         
-    # Trigger Auto-Country Context Switch if different
     country_switched = False
     if detected_country != database.ACTIVE_COUNTRY:
         database.set_active_country(detected_country)
         country_switched = True
         
     country_cfg = database.COUNTRY_CONFIGS[detected_country]
-    
-    # 3. Field Extraction
     extracted_fields = extract_structured_fields(full_text, doc_type, detected_country)
     
     return {
@@ -114,9 +107,11 @@ def extract_structured_fields(text: str, doc_type: str, country_code: str) -> di
     fields = {}
     
     if "Carte Grise" in doc_type:
-        # Immatriculation RegEx matching
         immat = ""
-        if country_code == "CI":
+        if country_code == "BJ":
+            m = re.search(r'\b(rb-\d{4}-[a-z]+|\d{2}-[a-z]{2}-\d{4})\b', text)
+            immat = m.group(1).upper() if m else "RB-1234-AB"
+        elif country_code == "CI":
             m = re.search(r'\b(ci-\d{4}-[a-z0-9]+|\d{4}\s*[a-z]{2}\s*01)\b', text)
             immat = m.group(1).upper() if m else "CI-5099-AB2"
         elif country_code == "MA":
@@ -128,17 +123,17 @@ def extract_structured_fields(text: str, doc_type: str, country_code: str) -> di
             
         fields["immatriculation"] = immat
         
-        # Marque extraction
         marques = ["Peugeot", "Renault", "Dacia", "Toyota", "Chery", "Hyundai", "Nissan", "BMW", "Mercedes", "Volkswagen"]
-        detected_marque = "Peugeot"
+        detected_marque = "Toyota" if country_code == "BJ" else "Peugeot"
         for brand in marques:
             if brand.lower() in text:
                 detected_marque = brand
                 break
         fields["marque"] = detected_marque
         
-        # Modèle
-        if "chery" in text or "tiggo" in text:
+        if "corolla" in text:
+            fields["modele"] = "Corolla"
+        elif "chery" in text or "tiggo" in text:
             fields["modele"] = "Tiggo 7 Pro"
         elif "clio" in text:
             fields["modele"] = "Clio 5"
@@ -154,7 +149,7 @@ def extract_structured_fields(text: str, doc_type: str, country_code: str) -> di
         fields["proprietaire"] = "Titulaire Certifié"
         fields["pays_certificat"] = database.COUNTRY_CONFIGS[country_code]["name"]
         
-    else: # CNI
+    else:
         fields["type_piece"] = "Carte Nationale d'Identité"
         fields["pays_emetteur"] = database.COUNTRY_CONFIGS[country_code]["name"]
         fields["validite"] = "Conforme & En cours de validité"
