@@ -14,12 +14,13 @@ FRENCH_STOP_WORDS = {
 
 INVALID_NAMES = {
     "document", "fichier", "carte", "grise", "pdf", "prospect", "inconnu", "bonjour", "salut",
-    "oui", "non", "merci", "platinium", "platinum", "tiers", "zen", "formule", "auto", "devis", "tarif"
+    "oui", "non", "merci", "platinium", "platinum", "tiers", "zen", "formule", "auto", "devis", "tarif",
+    "cotonou", "parakou", "calavi", "porto-novo", "natitingou", "bohicon", "djougou"
 }
 
+BENIN_CITIES = ["cotonou", "parakou", "calavi", "porto-novo", "natitingou", "bohicon", "djougou", "kandi", "lokossa", "ouidah"]
+
 def handle_sales_conversation(prospect_id: str, message_text: str, channel: str = "WhatsApp") -> dict:
-    """Process prospect chat message, track acquisition channel, and invoke country-aware LLM."""
-    
     country_code = database.ACTIVE_COUNTRY
     cfg = database.COUNTRY_CONFIGS[country_code]
     
@@ -29,17 +30,19 @@ def handle_sales_conversation(prospect_id: str, message_text: str, channel: str 
             "country": country_code,
             "name": "Prospect Inconnu",
             "phone": "",
+            "city": "Cotonou",
             "channel": channel,
             "vehicle": "",
             "need": "",
             "intention": "Froid ❄️",
+            "risk_level": "STANDARD",
             "document_uploaded": False,
             "document_name": "",
             "appointment": "",
             "orass_policy_num": "",
             "conversation": [],
             "summary": f"Nouveau prospect {cfg['name']} en cours de qualification.",
-            "next_action": "Attente qualification.",
+            "next_action": "Accueil et qualification bienveillante.",
             "created_at": "À l'instant"
         }
         
@@ -47,10 +50,15 @@ def handle_sales_conversation(prospect_id: str, message_text: str, channel: str 
     prospect["channel"] = channel
     
     prospect["conversation"].append({"sender": "user", "text": message_text})
-    
     msg_lower = message_text.lower()
     
-    # 1. 100% Dynamic Name Extraction with strict invalid word filtering
+    # 1. City / Zone Extraction
+    for city in BENIN_CITIES:
+        if city in msg_lower:
+            prospect["city"] = city.title()
+            break
+
+    # 2. Dynamic Name Extraction
     name_found = extract_dynamic_name(message_text)
     if name_found and prospect["name"] == "Prospect Inconnu" and name_found.lower() not in INVALID_NAMES:
         prospect["name"] = name_found
@@ -59,7 +67,7 @@ def handle_sales_conversation(prospect_id: str, message_text: str, channel: str 
     if phone_found:
         prospect["phone"] = phone_found
         
-    # 2. Intelligent Vehicle Field Maintenance
+    # 3. Vehicle Extraction
     if not prospect.get("vehicle") or any(w in prospect.get("vehicle", "").lower() for w in ["informations", "toujours", "demande"]):
         vehicle_match = re.search(r'\b(toyota\s+\w+|peugeot\s+\w+|clio\s*\d*|bmw\s*\d*|mercedes\s*\w*|dacia\s*\w*|rav4|hyundai\s*\w*|nissan\s*\w*)\b', msg_lower)
         if vehicle_match:
@@ -67,7 +75,7 @@ def handle_sales_conversation(prospect_id: str, message_text: str, channel: str 
         elif prospect.get("document_uploaded"):
             prospect["vehicle"] = "Toyota Corolla (RB-1234-AB)" if country_code == "BJ" else "Mercedes Série Spéciale"
             
-    # 3. Handle Ordinal Formula Queries ("La 3e ?", "la 3eme", "la 2e")
+    # 4. Ordinal Formula Queries
     if any(k in msg_lower for k in ["3e", "3ème", "3eme", "troisième", "troisieme", "la 3", "formule 3"]):
         prospect["need"] = cfg["products"][-1]["name"]
     elif any(k in msg_lower for k in ["2e", "2ème", "2eme", "deuxième", "deuxieme", "la 2", "formule 2"]):
@@ -75,7 +83,12 @@ def handle_sales_conversation(prospect_id: str, message_text: str, channel: str 
     elif any(k in msg_lower for k in ["1ere", "1ère", "première", "premiere", "la 1", "formule 1"]):
         prospect["need"] = cfg["products"][0]["name"]
 
-    # 4. Trigger Policy Issuance (new-deal) ONLY IF COUNTRY IS BENIN (BJ)
+    # 5. Underwriting Risk Calculation
+    sinistres = 2 if "2 sinistres" in msg_lower or "deux sinistres" in msg_lower else (1 if "1 sinistre" in msg_lower or "un sinistre" in msg_lower else 0)
+    risk_data = orass_client.orass_engine.calculate_risk_score(sinistres_2ans=sinistres, city=prospect.get("city", "Cotonou"))
+    prospect["risk_level"] = risk_data["level"]
+
+    # 6. Trigger Human Advisor Validation
     if country_code == "BJ" and any(k in msg_lower for k in ["souscrire", "émettre", "emettre", "valider la police", "confirmer la souscription"]):
         if not prospect.get("orass_policy_num"):
             v_name = prospect.get("vehicle") or "Toyota Corolla"
@@ -98,7 +111,6 @@ def handle_sales_conversation(prospect_id: str, message_text: str, channel: str 
             prospect["orass_policy_num"] = orass_deal.get("numepoli", "POL-AUTO-BENIN-894102")
             prospect["intention"] = "Chaud 🔥"
 
-    # 5. Match country-specific product catalog
     if not prospect["need"]:
         for prod in cfg["products"]:
             if any(w in msg_lower for w in prod["name"].lower().split()):
@@ -111,8 +123,7 @@ def handle_sales_conversation(prospect_id: str, message_text: str, channel: str 
         elif "tiers" in msg_lower or "occasion" in msg_lower:
             prospect["need"] = cfg["products"][0]["name"]
 
-    # 6. Commercial Maturity Rules
-    if prospect.get("orass_policy_num") or prospect.get("document_uploaded") or prospect.get("appointment") or any(k in msg_lower for k in ["devis", "tarif", "prix", "combien", "simulation", "souscrire", "trois devis", "3 devis"]):
+    if prospect.get("orass_policy_num") or prospect.get("document_uploaded") or prospect.get("appointment") or any(k in msg_lower for k in ["devis", "tarif", "prix", "combien", "simulation", "souscrire"]):
         prospect["intention"] = "Chaud 🔥"
     elif prospect.get("vehicle") or prospect.get("need"):
         prospect["intention"] = "Chaud 🔥"
@@ -121,15 +132,10 @@ def handle_sales_conversation(prospect_id: str, message_text: str, channel: str 
     else:
         prospect["intention"] = "Froid ❄️"
             
-    # Generate live LLM response with language mirroring and prospect state memory
     history_tuples = prospect["conversation"][:-1]
     assistant_reply = nlp.generate_llm_response(history_tuples, message_text, country_code=country_code, prospect_data=prospect)
     
-    if country_code == "BJ" and prospect.get("orass_policy_num") and "POL-AUTO" not in assistant_reply:
-        assistant_reply += f"\n\n🎉 Félicitations ! Votre Police d'Assurance Officielle a été émise : N° {prospect['orass_policy_num']}."
-        
     prospect["conversation"].append({"sender": "assistant", "text": assistant_reply})
-    
     update_lead_intelligence(prospect, cfg)
     
     return {
@@ -138,15 +144,11 @@ def handle_sales_conversation(prospect_id: str, message_text: str, channel: str 
     }
 
 def extract_dynamic_name(text: str) -> str:
-    """Dynamically extract any first name or surname without hardcoded names."""
     text_clean = text.strip()
-    
-    # 1. Look for explicit name patterns
     patterns = [
         r"(?:je m'appelle|moi c'est|mon nom est|mon prénom est|je suis|c'est)\s+([a-zA-Z]{2,20}(?:\s+[a-zA-Z]{2,20})?)",
         r"\b([A-Z][a-z]{2,15}(?:\s+[A-Z][a-z]{2,15})?)\b"
     ]
-    
     for pattern in patterns:
         match = re.search(pattern, text_clean)
         if match:
@@ -154,11 +156,9 @@ def extract_dynamic_name(text: str) -> str:
             candidate_words = candidate.lower().split()
             if not any(w in FRENCH_STOP_WORDS for w in candidate_words) and candidate.lower() not in INVALID_NAMES and len(candidate) >= 3:
                 return candidate
-                
     words = [w for w in re.findall(r'\b[a-zA-Z]{3,20}\b', text_clean) if w.lower() not in FRENCH_STOP_WORDS and w.lower() not in INVALID_NAMES]
     if len(words) == 1:
         return words[0].title()
-        
     return ""
 
 def re_search_phone(text: str) -> str:
@@ -172,27 +172,24 @@ def update_lead_intelligence(prospect: dict, cfg: dict):
     p_name = prospect.get("name", "")
     if p_name and p_name.lower() not in INVALID_NAMES:
         summary_parts.append(f"Prospect: {p_name}.")
-    if prospect["channel"]:
-        summary_parts.append(f"Canal: {prospect['channel']}.")
+    if prospect.get("city"):
+        summary_parts.append(f"Ville: {prospect['city']}.")
     if prospect["vehicle"]:
         summary_parts.append(f"Véhicule: {prospect['vehicle']}.")
     if prospect["need"]:
         summary_parts.append(f"Formule: {prospect['need']}.")
+    if prospect.get("risk_level"):
+        summary_parts.append(f"Risque: {prospect['risk_level']}.")
     if prospect.get("orass_policy_num"):
-        summary_parts.append(f"Police: {prospect['orass_policy_num']}.")
-    elif prospect["document_uploaded"]:
-        summary_parts.append(f"Pièces: Validées.")
-    if prospect.get("appointment"):
-        summary_parts.append(f"RDV: {prospect['appointment']}.")
+        summary_parts.append(f"Police Pré-validée: {prospect['orass_policy_num']}.")
         
     prospect["summary"] = " ".join(summary_parts)
     
-    if prospect.get("orass_policy_num"):
-        prospect["next_action"] = f"Police {prospect['orass_policy_num']} émise. Télécharger la carte verte."
-    elif prospect.get("appointment"):
-        prospect["next_action"] = f"Rendez-vous téléphonique planifié le {prospect['appointment']}."
+    if prospect.get("risk_level") == "ELEVE":
+        prospect["next_action"] = "Inviter le prospect en agence (Cotonou / Parakou) pour étude de souscription."
+    elif prospect.get("orass_policy_num"):
+        prospect["next_action"] = "Devis pré-validé. Prise de contact par un conseiller commercial sous 15 min."
     elif prospect["document_uploaded"] or prospect["intention"] == "Chaud 🔥":
-        action_str = "Émettre la Police Auto Officielle ou proposer un rendez-vous." if cfg['code'] == "BJ" else "Proposer un rendez-vous pour souscription."
-        prospect["next_action"] = action_str
+        prospect["next_action"] = "Devis pré-validé. Proposer la validation par un conseiller."
     else:
-        prospect["next_action"] = f"Demander l'upload du certificat d'immatriculation ({cfg['name']})."
+        prospect["next_action"] = f"Qualification de la ville et du véhicule ({cfg['name']})."

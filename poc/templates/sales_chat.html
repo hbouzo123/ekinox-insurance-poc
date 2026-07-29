@@ -7,9 +7,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #0075C9; /* Sanlam Lochmara Blue */
-            --primary-dark: #003781; /* Resolution / Allianz Blue */
-            --secondary: #00A3E0; /* Sanlam Cyan Accent */
+            --primary: #0075C9;
+            --primary-dark: #003781;
+            --secondary: #00A3E0;
             --bg-dark: #0b132b;
             --card-bg: rgba(15, 23, 42, 0.7);
             --text-light: #f8fafc;
@@ -294,7 +294,6 @@
 
         #file-input { display: none; }
 
-        /* FULL-DUPLEX CONTINUOUS VOICE CALL OVERLAY MODAL */
         .voice-call-overlay {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -319,13 +318,8 @@
             box-shadow: 0 0 30px rgba(0, 163, 224, 0.4);
         }
 
-        .voice-call-avatar-ring.speaking {
-            animation: pulseRing 1.5s infinite ease-in-out;
-        }
-
-        .voice-call-avatar-ring.listening {
-            animation: pulseListen 1.2s infinite ease-in-out;
-        }
+        .voice-call-avatar-ring.speaking { animation: pulseRing 1.5s infinite ease-in-out; }
+        .voice-call-avatar-ring.listening { animation: pulseListen 1.2s infinite ease-in-out; }
 
         @keyframes pulseRing {
             0% { box-shadow: 0 0 0 0 rgba(0, 163, 224, 0.8); }
@@ -358,27 +352,9 @@
             text-align: center;
         }
 
-        .audio-spectrum {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-            height: 30px;
-            width: 100%;
-        }
-
-        .audio-bar {
-            width: 4px;
-            height: 8px;
-            background: #00A3E0;
-            border-radius: 2px;
-            transition: height 0.1s ease;
-        }
-
-        .audio-spectrum.active .audio-bar {
-            animation: wave 0.8s infinite ease-in-out alternate;
-        }
-
+        .audio-spectrum { display: flex; align-items: center; justify-content: center; gap: 4px; height: 30px; width: 100%; }
+        .audio-bar { width: 4px; height: 8px; background: #00A3E0; border-radius: 2px; transition: height 0.1s ease; }
+        .audio-spectrum.active .audio-bar { animation: wave 0.8s infinite ease-in-out alternate; }
         .audio-bar:nth-child(1) { animation-delay: 0.1s; }
         .audio-bar:nth-child(2) { animation-delay: 0.3s; }
         .audio-bar:nth-child(3) { animation-delay: 0.2s; }
@@ -391,17 +367,7 @@
         }
 
         .voice-call-controls { display: flex; align-items: center; gap: 1.2rem; }
-
-        .call-btn-circle {
-            width: 50px; height: 50px;
-            border-radius: 50%;
-            border: none;
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer;
-            color: white;
-            transition: all 0.2s ease;
-        }
-
+        .call-btn-circle { width: 50px; height: 50px; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; color: white; transition: all 0.2s ease; }
         .btn-mute { background: rgba(255, 255, 255, 0.15); }
         .btn-mute.active { background: #eab308; }
         .btn-upload-voice { background: rgba(0, 117, 201, 0.4); border: 1px solid #00A3E0; }
@@ -456,7 +422,6 @@
             <div class="phone-wrapper">
                 <div class="phone-notch"></div>
                 
-                <!-- FULL-DUPLEX CONTINUOUS VOICE CALL OVERLAY MODAL -->
                 <div class="voice-call-overlay" id="voice-call-modal">
                     <div class="voice-call-header">
                         <div class="voice-call-avatar-ring" id="call-avatar-ring">
@@ -513,11 +478,9 @@
                 
                 <div class="wa-chat-area" id="chat-area">
                     <div class="msg-bubble msg-assistant" id="initial-welcome-msg">
-Bonjour ! 👋 Je suis votre assistant Assurance Auto SanlamAllianz.
+Bonjour ! 👋 Je suis votre Conseiller Commercial Virtuel SanlamAllianz. C'est un plaisir de vous accueillir !
 
-Je peux calculer votre tarif en 2 minutes ou analyser votre carte grise directement par photo.
-
-Que souhaitez-vous faire ?
+Pour mieux personnaliser votre simulation, comment vous appelez-vous et dans quelle ville du Bénin habitez-vous (ex: Cotonou, Parakou, Calavi) ?
 
                         <div class="chips-container" id="initial-chips">
                             <button class="quick-chip" onclick="clickQuickReply('📊 Faire une simulation rapide')">📊 Faire une simulation rapide</button>
@@ -549,7 +512,7 @@ Que souhaitez-vous faire ?
             <div class="meta-grid">
                 <div class="meta-card"><label>Nom Prospect</label><span id="intel-name">Prospect Inconnu</span></div>
                 <div class="meta-card"><label>Maturité</label><span id="intel-intention">Froid ❄️</span></div>
-                <div class="meta-card"><label>Véhicule</label><span id="intel-vehicle">—</span></div>
+                <div class="meta-card"><label>Ville & Zone</label><span id="intel-city">Cotonou (Zone A)</span></div>
                 <div class="meta-card"><label>Product Advisor</label><span id="intel-need" style="color: var(--secondary);">—</span></div>
             </div>
 
@@ -573,16 +536,13 @@ Que souhaitez-vous faire ?
             if (synth) synth.cancel();
             document.getElementById("intel-name").innerText = "Prospect Inconnu";
             document.getElementById("intel-intention").innerText = "Froid ❄️";
-            document.getElementById("intel-vehicle").innerText = "—";
+            document.getElementById("intel-city").innerText = "Cotonou (Zone A)";
             document.getElementById("intel-need").innerText = "—";
             document.getElementById("intel-summary").innerText = "Nouvelle session initialisée.";
             document.getElementById("intel-next-action").innerText = "Poursuivre la qualification conversationnelle.";
             setUXVariant('A');
         }
 
-        /* ----------------------------------------------------------- */
-        /* 100% HANDS-FREE FULL-DUPLEX CONTINUOUS VOICE CALL ENGINE    */
-        /* ----------------------------------------------------------- */
         let recognition = null;
         let isCallActive = false;
         let isMuted = false;
@@ -596,7 +556,6 @@ Que souhaitez-vous faire ?
         let ttsSafetyTimer = null;
         let chromeTtsHeartbeat = null;
 
-        // GLOBAL UTTERANCE ANCHOR TO PREVENT CHROME GARBAGE COLLECTION CUTOFF BUG
         window.activeUtterances = [];
 
         function loadHighQualityVoice() {
@@ -614,7 +573,6 @@ Que souhaitez-vous faire ?
                 speechSynthesis.onvoiceschanged = loadHighQualityVoice;
             }
 
-            // Chrome 14-second TTS silence pause prevention heartbeat
             clearInterval(chromeTtsHeartbeat);
             chromeTtsHeartbeat = setInterval(() => {
                 if (synth && synth.speaking) {
@@ -648,7 +606,6 @@ Que souhaitez-vous faire ?
 
                 if (silenceDebounceTimer) clearTimeout(silenceDebounceTimer);
                 
-                // 2200ms silence debounce delay to allow natural speech pauses
                 silenceDebounceTimer = setTimeout(async () => {
                     if (!isProcessing && isCallActive && currentVoiceBuffer.trim().length > 0) {
                         isProcessing = true;
@@ -665,7 +622,6 @@ Que souhaitez-vous faire ?
             };
 
             recognition.onerror = function(event) {
-                console.warn("SpeechRecognition error event:", event.error);
                 if (event.error === 'not-allowed') {
                     document.getElementById("call-status-text").innerText = "Micro bloqué par le navigateur ⚠️";
                     document.getElementById("call-transcript-box").innerHTML = "<strong>⚠️ Accès au microphone refusé.</strong><br>Veuillez autoriser le microphone dans la barre d'adresse du navigateur (icône 🔒).";
@@ -692,7 +648,7 @@ Que souhaitez-vous faire ?
 
         async function startVoiceCall() {
             if (!SpeechRecognition) {
-                alert("La reconnaissance vocale native n'est pas supportée sur ce navigateur. Utilisez Google Chrome, Microsoft Edge ou Safari.");
+                alert("La reconnaissance vocale native n'est pas supportée sur ce navigateur.");
                 return;
             }
 
@@ -701,11 +657,10 @@ Que souhaitez-vous faire ?
                     await navigator.mediaDevices.getUserMedia({ audio: true });
                 }
             } catch(err) {
-                alert("⚠️ Le microphone est bloqué. Veuillez autoriser l'accès au microphone dans la barre d'adresse (icône de cadenas 🔒) puis réessayez.");
+                alert("⚠️ Le microphone est bloqué. Veuillez autoriser l'accès au microphone dans la barre d'adresse (icône 🔒).");
                 return;
             }
 
-            // UNLOCK CHROME HTTPS AUDIO CONTEXT ON USER CLICK
             if (synth) {
                 try {
                     synth.cancel();
@@ -750,9 +705,7 @@ Que souhaitez-vous faire ?
                 if (data.status === "success" && data.reply) {
                     let cleanedReply = data.reply.replace(/\[([^\]]+)\]/g, '').replace(/[*_#]/g, '').trim();
                     parseAndAppendMessage("assistant", data.reply);
-                    
                     updateIntelPanel(data.state || data.prospect_state);
-                    
                     document.getElementById("call-transcript-box").innerHTML = `🤖 <strong>Conseiller :</strong> "${cleanedReply}"`;
                     speakText(cleanedReply);
                 } else {
@@ -760,7 +713,6 @@ Que souhaitez-vous faire ?
                     restartListeningLoop();
                 }
             } catch(e) {
-                console.error("Voice chat error:", e);
                 isProcessing = false;
                 restartListeningLoop();
             }
@@ -769,7 +721,6 @@ Que souhaitez-vous faire ?
         function speakText(text) {
             if (!synth) { isProcessing = false; restartListeningLoop(); return; }
             
-            // STRICT MUTEX: STOP RECOGNITION BEFORE TTS PLAYS TO PREVENT CHROME AUDIO CUTOFF
             isProcessing = true;
             if (recognition) try { recognition.stop(); } catch(e){}
             
@@ -777,18 +728,14 @@ Que souhaitez-vous faire ?
             window.activeUtterances = [];
             if (ttsSafetyTimer) clearTimeout(ttsSafetyTimer);
 
-            try {
-                if (synth.paused) synth.resume();
-            } catch(e){}
+            try { if (synth.paused) synth.resume(); } catch(e){}
 
             document.getElementById("call-status-text").innerText = "Le conseiller répond... 🔊";
             document.getElementById("call-avatar-ring").className = "voice-call-avatar-ring speaking";
             document.getElementById("call-audio-spectrum").classList.add("active");
 
-            // Strip action buttons & markdown
             let cleanText = text.replace(/\[([^\]]+)\]/g, '').replace(/[*_#]/g, '').replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').trim();
 
-            // Split into sentences so Chrome Web Speech API NEVER truncates long utterances (>200 chars limit)
             let rawSentences = cleanText.split(/(?<=[.!?\n])\s+/);
             let sentences = [];
             rawSentences.forEach(s => {
@@ -813,13 +760,10 @@ Que souhaitez-vous faire ?
                 let currentSentence = sentences[sentenceIndex];
                 sentenceIndex++;
 
-                // Ensure recognition is stopped and AudioContext is active
                 if (recognition) try { recognition.stop(); } catch(e){}
                 try { if (synth.paused) synth.resume(); } catch(e){}
 
                 const utterance = new SpeechSynthesisUtterance(currentSentence);
-                
-                // GC PROTECTION: STORE GLOBAL REFERENCE
                 window.activeUtterances.push(utterance);
 
                 if (/[\u0600-\u06FF]/.test(currentSentence)) {
@@ -841,7 +785,6 @@ Que souhaitez-vous faire ?
                 };
 
                 utterance.onerror = function(err) {
-                    console.warn("Sentence TTS error:", err);
                     const idx = window.activeUtterances.indexOf(utterance);
                     if (idx > -1) window.activeUtterances.splice(idx, 1);
                     speakNextSentence();
@@ -850,10 +793,8 @@ Que souhaitez-vous faire ?
                 synth.speak(utterance);
             }
 
-            // Global safety timeout
             const fallbackDelay = Math.max(4000, Math.min(18000, cleanText.length * 90));
             ttsSafetyTimer = setTimeout(() => {
-                console.warn("[TTS Safety Net] Overall fallback timeout triggered.");
                 synth.cancel();
                 window.activeUtterances = [];
                 document.getElementById("call-avatar-ring").className = "voice-call-avatar-ring";
@@ -897,9 +838,6 @@ Que souhaitez-vous faire ?
             parseAndAppendMessage("assistant", `📞 Fin de l'appel vocal (${document.getElementById("call-timer").innerText}). Résumé sauvegardé dans la fiche prospect.\n\n[Obtenir mon devis par écrit] [Confirmer mon RDV]`);
         }
 
-        /* ----------------------------------------------------------- */
-        /* STANDARD CHAT UX & MONITORING                                */
-        /* ----------------------------------------------------------- */
         function setUXVariant(variant) {
             document.getElementById("btn-opt-a").className = `ux-btn ${variant === 'A' ? 'active' : ''}`;
             document.getElementById("btn-opt-b").className = `ux-btn ${variant === 'B' ? 'active' : ''}`;
@@ -910,11 +848,9 @@ Que souhaitez-vous faire ?
             if (variant === 'A') {
                 chatArea.innerHTML = `
                     <div class="msg-bubble msg-assistant">
-Bonjour ! 👋 Je suis votre assistant Assurance Auto SanlamAllianz.
+Bonjour ! 👋 Je suis votre Conseiller Commercial Virtuel SanlamAllianz. C'est un plaisir de vous accueillir !
 
-Je peux calculer votre tarif en 2 minutes ou analyser votre carte grise directement par photo.
-
-Que souhaitez-vous faire ?
+Pour mieux personnaliser votre simulation, comment vous appelez-vous et dans quelle ville du Bénin habitez-vous (ex: Cotonou, Parakou, Calavi) ?
 
                         <div class="chips-container">
                             <button class="quick-chip" onclick="clickQuickReply('📊 Faire une simulation rapide')">📊 Faire une simulation rapide</button>
@@ -1002,7 +938,6 @@ Comment souhaitez-vous démarrer ?
             input.value = "";
             
             const channel = document.getElementById("channel-select").value;
-            
             const typingBubble = document.createElement("div");
             typingBubble.className = "msg-bubble msg-assistant";
             typingBubble.innerText = "Rédaction en cours...";
@@ -1044,16 +979,8 @@ Comment souhaitez-vous démarrer ?
             
             if (data.status === "success") {
                 const vehicleName = (data.prospect_state && data.prospect_state.vehicle) ? data.prospect_state.vehicle : "votre véhicule";
-                
                 parseAndAppendMessage("assistant", `Carte grise analysée par OCR !\n\n[Obtenir mon tarif personnalisé] [Prendre RDV avec un conseiller]`);
                 updateIntelPanel(data.prospect_state);
-
-                if (isCallActive) {
-                    isProcessing = true;
-                    const voiceNotice = `J'ai bien reçu et analysé votre carte grise par OCR pour ${vehicleName} ! Votre devis est calculé. Souhaitez-vous connaître votre tarif personnalisé Auto Platinum ?`;
-                    document.getElementById("call-transcript-box").innerHTML = `📄 <strong>Carte Grise analysée :</strong> "${vehicleName}"`;
-                    speakText(voiceNotice);
-                }
             }
         });
 
@@ -1061,7 +988,11 @@ Comment souhaitez-vous démarrer ?
             if (!state) return;
             document.getElementById("intel-name").innerText = state.name || "Prospect Inconnu";
             document.getElementById("intel-intention").innerText = state.intention || "Froid ❄️";
-            document.getElementById("intel-vehicle").innerText = state.vehicle || "En qualification...";
+            
+            const cName = state.city || "Cotonou";
+            const isZb = ["Parakou", "Natitingou", "Djougou", "Bohicon", "Kandi", "Lokossa", "Ouidah"].includes(cName);
+            document.getElementById("intel-city").innerText = cName + (isZb ? " (Zone B -15%)" : " (Zone A)");
+            
             document.getElementById("intel-need").innerText = state.need || "Conseil en cours...";
             document.getElementById("intel-summary").innerText = state.summary || "";
             document.getElementById("intel-next-action").innerText = state.next_action || "";
