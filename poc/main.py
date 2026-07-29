@@ -2,7 +2,6 @@ import sys
 import os
 import io
 
-# Force UTF-8 encoding on Windows console to prevent cp1252 crashes with Arabic script
 if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 if hasattr(sys.stderr, 'reconfigure'):
@@ -35,6 +34,10 @@ async def add_no_cache_header(request: Request, call_next):
     response.headers["Pragma"] = "no-cache"
     response.headers["Expires"] = "0"
     return response
+
+# Mount Static Files
+os.makedirs("static", exist_ok=True)
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Mount routes
 app.include_router(sales_routes.router)

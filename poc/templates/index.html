@@ -3,16 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SanlamAllianz Insurance Platform - Cockpit Multi-Pays</title>
+    <title>Ekinox IA - Plateforme Digitale SanlamAllianz</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #0075C9; /* Sanlam Lochmara Blue */
-            --primary-dark: #003781; /* Resolution / Allianz Blue */
-            --primary-glow: rgba(0, 117, 201, 0.35);
-            --secondary: #00A3E0; /* Sanlam Cyan Accent */
-            --secondary-glow: rgba(0, 163, 224, 0.35);
-            --bg-dark: #0b132b; /* Deep Navy Background */
+            --primary: #0075C9;
+            --primary-dark: #003781;
+            --secondary: #00A3E0;
+            --bg-dark: #0b132b;
             --card-bg: rgba(15, 23, 42, 0.7);
             --text-light: #f8fafc;
             --text-muted: #94a3b8;
@@ -28,12 +26,11 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            background-image: radial-gradient(circle at 10% 20%, rgba(0, 117, 201, 0.18) 0%, transparent 45%),
-                              radial-gradient(circle at 90% 80%, rgba(0, 163, 224, 0.15) 0%, transparent 45%);
+            background-image: radial-gradient(circle at 50% 0%, rgba(0, 117, 201, 0.15) 0%, transparent 70%);
         }
 
         header {
-            padding: 1rem 4rem;
+            padding: 1rem 3rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -42,11 +39,8 @@
             background: rgba(11, 19, 43, 0.85);
         }
 
-        .logo-container {
-            display: flex;
-            align-items: center;
-            text-decoration: none;
-        }
+        .logo-container { display: flex; align-items: center; text-decoration: none; }
+        .brand-logo-img { height: 44px; background: white; padding: 4px 12px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
 
         .country-selector {
             display: flex;
@@ -108,39 +102,17 @@
 
         .btn-group { display: flex; gap: 1rem; margin-top: auto; }
         .btn { flex: 1; padding: 0.9rem 1.5rem; border-radius: 0.8rem; font-weight: 600; text-align: center; text-decoration: none; cursor: pointer; border: none; }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-primary:hover { background: #005f9e; box-shadow: 0 0 15px var(--primary-glow); }
-        .btn-secondary { background: var(--secondary); color: white; }
-        .btn-secondary:hover { background: #0089bd; box-shadow: 0 0 15px var(--secondary-glow); }
-        .btn-outline { background: transparent; border: 1px solid var(--border); color: white; }
-        .btn-outline:hover { background: rgba(255,255,255,0.05); }
-
-        footer.site-footer {
-            text-align: center;
-            padding: 1.8rem;
-            border-top: 1px solid var(--border);
-            color: var(--text-muted);
-            font-size: 0.9rem;
-            margin-top: auto;
-        }
+        .btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; }
+        .btn-secondary { background: rgba(255,255,255,0.05); color: var(--text-light); border: 1px solid var(--border); }
     </style>
 </head>
 <body>
 
     <header>
         <a href="/" class="logo-container">
-            <svg width="220" height="50" viewBox="0 0 220 50" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="25" cy="25" r="22" fill="#0075C9"/>
-                <path d="M25 9C16.1634 9 9 16.1634 9 25C9 33.8366 16.1634 41 25 41C33.8366 41 41 33.8366 41 25C41 16.1634 33.8366 9 25 9ZM25 38C17.8203 38 12 32.1797 12 25C12 17.8203 17.8203 12 25 12C32.1797 12 38 17.8203 38 25C38 32.1797 32.1797 38 25 38Z" fill="#FFFFFF"/>
-                <path d="M25 15C19.4772 15 15 19.4772 15 25C15 27.5 16 29.8 17.6 31.5L25 24L32.4 31.5C34 29.8 35 27.5 35 25C35 19.4772 30.5228 15 25 15Z" fill="#FFFFFF"/>
-                <circle cx="25" cy="21" r="3.5" fill="#00A3E0"/>
-                <text x="54" y="32" font-family="'Outfit', sans-serif" font-size="23" font-weight="800" fill="#FFFFFF" letter-spacing="-0.5">
-                    Sanlam<tspan fill="#00A3E0" font-weight="400">Allianz</tspan>
-                </text>
-            </svg>
+            <img src="/static/z.webp" alt="SanlamAllianz Logo" class="brand-logo-img">
         </a>
         
-        <!-- Country Context Switcher -->
         <div class="country-selector">
             <span style="font-size:0.9rem; color:var(--text-muted);">Contexte Pays :</span>
             <select id="country-select" onchange="switchCountry()">
@@ -154,57 +126,36 @@
 
     <main>
         <div class="hero">
-            <h1>Ekinox SanlamAllianz Platform</h1>
-            <p>Accélérateurs digitaux d'assurance auto pour <strong>{{ country.entity }}</strong> au/en <strong>{{ country.name }}</strong>.</p>
+            <h1>Plateforme Digitale Ekinox IA</h1>
+            <p>Accélérateur Unifié de Vente Omnicanale & Intelligence Anti-Fraude pour <strong>SanlamAllianz {{ country.name }}</strong>.</p>
         </div>
 
         <div class="grid">
-            <!-- Digital Sales -->
             <div class="card">
-                <span style="background:rgba(0,117,201,0.2); color:#93c5fd; padding:0.3rem 0.8rem; border-radius:1rem; font-size:0.8rem; font-weight:600; width:fit-content; border:1px solid rgba(0,117,201,0.4);">Accélérateur Conversion</span>
-                <h2>Digital Sales Platform</h2>
-                <p>Acquisition conversationnelle adaptée au marché {{ country.name }} et à la gamme {{ country.entity }}.</p>
-                <div style="font-size:0.9rem; color:var(--text-muted); line-height:1.5;">
-                    <strong>Catalogue Produit Actif :</strong><br>
-                    {% for p in country.products %}
-                    • {{ p.name }} ({{ p.desc }})<br>
-                    {% endfor %}
-                </div>
+                <h2>1. Ekinox Digital Sales Accelerator</h2>
+                <p>Assistant commercial pré-vente multilingue (Français, Arabe, Dialecte), calcul de devis instantané, scan OCR de Carte Grise et transfert d'opportunités en temps réel.</p>
                 <div class="btn-group">
-                    <a href="/sales/chat" class="btn btn-primary">Simulateur Chat {{ country.flag }}</a>
-                    <a href="/sales/workspace" class="btn btn-outline">Workspace Commercial</a>
+                    <a href="/sales/chat" class="btn btn-primary">Simulateur Prospect (Chat/Vocal)</a>
+                    <a href="/sales/workspace" class="btn btn-secondary">Espace Conseiller (Sales)</a>
                 </div>
             </div>
 
-            <!-- Fraud Intelligence -->
             <div class="card">
-                <span style="background:rgba(0,163,224,0.2); color:#99f6e4; padding:0.3rem 0.8rem; border-radius:1rem; font-size:0.8rem; font-weight:600; width:fit-content; border:1px solid rgba(0,163,224,0.4);">Accélérateur Sinistres</span>
-                <h2>Fraud Intelligence Platform</h2>
-                <p>Détection des anomalies de sinistres ajustée au barème {{ country.currency }} et aux réparateurs de {{ country.name }}.</p>
-                <div style="font-size:0.9rem; color:var(--text-muted); line-height:1.5;">
-                    <strong>Spécificités Pays :</strong><br>
-                    • Réseau Agréé : {{ country.default_garage }}<br>
-                    • Franchise Standard : {{ country.standard_franchise }} {{ country.currency }}<br>
-                    • Contrôle : {{ country.regulatory_body }}
-                </div>
+                <h2>2. Ekinox Fraud Intelligence Accelerator</h2>
+                <p>Moteur hybride d'évaluation du risque de fraude, cockpit d'investigation avec explication IA des alertes et tri automatique Fast-Track des sinistres.</p>
                 <div class="btn-group">
-                    <a href="/fraud/workspace" class="btn btn-secondary">Workspace Investigation {{ country.flag }}</a>
+                    <a href="/fraud/workspace" class="btn btn-primary">Espace Investigation Fraude</a>
                 </div>
             </div>
         </div>
     </main>
 
-    <footer class="site-footer">
-        © 2026 SanlamAllianz. Tous droits réservés.
-    </footer>
-
     <script>
         async function switchCountry() {
-            const code = document.getElementById("country-select").value;
+            const countryCode = document.getElementById("country-select").value;
             const formData = new FormData();
-            formData.append("country_code", code);
-            
-            await fetch("/api/country/switch", { method: "POST", body: formData });
+            formData.append("country_code", countryCode);
+            await fetch("/api/country/select", { method: "POST", body: formData });
             window.location.reload();
         }
     </script>
