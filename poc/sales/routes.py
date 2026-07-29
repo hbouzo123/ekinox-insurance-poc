@@ -1,6 +1,6 @@
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from fastapi.responses import Response
-from core import database, document
+from core import database, document, orass_client
 from sales import assistant
 import csv
 import io
@@ -29,6 +29,62 @@ def sales_chat(prospect_id: str = Form(...), message: str = Form(...), channel: 
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/api/sales/takeover")
+def agent_takeover(prospect_id: str = Form(...), agent_name: str = Form("Conseiller SanlamAllianz"), message: str = Form(...)):
+    """Human Advisor Takes Over the live chat session and messages the prospect directly."""
+    if prospect_id not in database.PROSPECTS:
+        raise HTTPException(status_code=404, detail="Prospect non trouvé")
+        
+    prospect = database.PROSPECTS[prospect_id]
+    prospect["is_human_takeover"] = True
+    prospect["intention"] = "Chaud 🔥"
+    
+    agent_formatted_msg = f"👨‍💼 **{agent_name}** : {message}"
+    prospect["conversation"].append({"sender": "assistant", "text": agent_formatted_msg})
+    
+    prospect["next_action"] = f"Prise en main en direct par {agent_name}."
+    
+    return {
+        "status": "success",
+        "reply": agent_formatted_msg,
+        "prospect_state": prospect
+    }
+
+@router.post("/api/sales/discount")
+def apply_commercial_discount(prospect_id: str = Form(...), discount_pct: int = Form(5)):
+    """Apply a 5% or 10% Commercial Discount Override on a prospect's quote in 1 click."""
+    if prospect_id not in database.PROSPECTS:
+        raise HTTPException(status_code=404, detail="Prospect non trouvé")
+        
+    prospect = database.PROSPECTS[prospect_id]
+    prospect["commercial_discount_pct"] = discount_pct
+    
+    city = prospect.get("city", "Cotonou")
+    quote = orass_client.orass_engine.calculate_devis_auto(city=city)
+    
+    prime_originale = quote["detail"]["primeTtc"]
+    discount_amount = int(prime_originale * (discount_pct / 100.0))
+    prime_remisee = prime_originale - discount_amount
+    
+    notice_msg = (
+        f"🎉 **Offre Commerciale Spéciale SanlamAllianz !**\n\n"
+        f"Votre Conseiller Commercial vous accorde une **remise exceptionnelle de {discount_pct}%** sur votre Devis Officiel (N° {quote['numdevis']}) !\n\n"
+        f"• Tarif initial CIMA : {prime_originale:,} FCFA\n".replace(",", " ") +
+        f"• Remise Accordée (-{discount_pct}%) : -{discount_amount:,} FCFA\n".replace(",", " ") +
+        f"💰 **Nouveau Montant Total TTC : {prime_remisee:,} FCFA**\n\n".replace(",", " ") +
+        f"[Valider mon Devis Remisé ({prime_remisee:,} FCFA)]  [Payer via MTN MoMo]".replace(",", " ")
+    )
+    
+    prospect["conversation"].append({"sender": "assistant", "text": notice_msg})
+    prospect["next_action"] = f"Remise de {discount_pct}% accordée ({prime_remisee:,} FCFA). Attente validation.".replace(",", " ")
+    
+    return {
+        "status": "success",
+        "discount_pct": discount_pct,
+        "new_price_ttc": prime_remisee,
+        "prospect_state": prospect
+    }
 
 @router.post("/api/sales/upload")
 async def sales_upload(prospect_id: str = Form(...), file: UploadFile = File(...)):
@@ -104,15 +160,11 @@ def export_prospects_csv():
             p.get("vehicle", ""),
             p.get("need", ""),
             p.get("intention", ""),
-            "Oui" if p.get("document_uploaded") else "Non",
-            p.get("appointment", "Non planifié"),
+            p.get("document_name", ""),
+            p.get("appointment", ""),
             p.get("summary", ""),
             p.get("next_action", "")
         ])
         
     output.seek(0)
-    return Response(
-        content=output.getvalue(),
-        media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=ekinox_prospects_pipeline.csv"}
-    )
+    return Response(content=output.getvalue(), media_type="text/csv", headers={"Content-Disposition": "attachment; filename=prospects_export_sanlamallianz.csv"})
