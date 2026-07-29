@@ -4,17 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Digital Sales Platform - SanlamAllianz</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: #0075C9;
             --primary-dark: #003781;
             --secondary: #00A3E0;
-            --bg-dark: #0b132b;
-            --card-bg: rgba(15, 23, 42, 0.7);
+            --bg-dark: #070c19;
+            --card-bg: rgba(15, 23, 42, 0.8);
             --text-light: #f8fafc;
             --text-muted: #94a3b8;
-            --border: rgba(255, 255, 255, 0.1);
+            --border: rgba(255, 255, 255, 0.12);
             --wa-bg: #e5ddd5;
             --wa-header: #075e54;
         }
@@ -28,28 +28,48 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            background-image: radial-gradient(circle at 10% 20%, rgba(0, 117, 201, 0.12) 0%, transparent 40%);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(0, 117, 201, 0.15) 0%, transparent 45%),
+                radial-gradient(circle at 90% 80%, rgba(0, 163, 224, 0.1) 0%, transparent 40%);
         }
 
         header.site-header {
-            padding: 0.8rem 3rem;
+            padding: 0.9rem 2.5rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
             border-bottom: 1px solid var(--border);
-            backdrop-filter: blur(12px);
-            background: rgba(11, 19, 43, 0.85);
+            backdrop-filter: blur(16px);
+            background: rgba(7, 12, 25, 0.85);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
         }
 
-        .logo-container { display: flex; align-items: center; text-decoration: none; }
-        .brand-logo-img { height: 42px; background: white; padding: 4px 12px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 1.2rem;
+            text-decoration: none;
+        }
+
+        .brand-logo-img {
+            height: 48px;
+            width: auto;
+            background: #ffffff;
+            padding: 6px 16px;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0, 117, 201, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.9);
+            transition: transform 0.2s ease;
+        }
+
+        .brand-logo-img:hover { transform: scale(1.02); }
 
         .header-actions { display: flex; align-items: center; gap: 1rem; }
 
         .btn-start-call {
             background: linear-gradient(135deg, #10b981, #059669);
             color: white;
-            padding: 0.55rem 1.1rem;
+            padding: 0.6rem 1.2rem;
             border-radius: 2rem;
             font-weight: 700;
             font-size: 0.85rem;
@@ -76,7 +96,7 @@
             background: transparent;
             border: none;
             color: var(--text-muted);
-            padding: 0.4rem 0.9rem;
+            padding: 0.45rem 1rem;
             border-radius: 1.5rem;
             font-size: 0.8rem;
             font-weight: 600;
@@ -84,7 +104,7 @@
             transition: all 0.2s ease;
         }
 
-        .ux-btn.active { background: var(--primary); color: white; }
+        .ux-btn.active { background: var(--primary); color: white; box-shadow: 0 2px 8px rgba(0, 117, 201, 0.4); }
 
         .channel-picker {
             display: flex;
@@ -92,7 +112,7 @@
             gap: 0.5rem;
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid var(--border);
-            padding: 0.4rem 0.9rem;
+            padding: 0.45rem 1rem;
             border-radius: 2rem;
         }
 
@@ -110,16 +130,16 @@
 
         .container {
             flex: 1;
-            max-width: 1400px;
+            max-width: 1440px;
             width: 100%;
             margin: 0 auto;
-            padding: 1.5rem 2rem;
+            padding: 1.8rem 2.5rem;
             display: flex;
-            gap: 2rem;
+            gap: 2.2rem;
         }
 
         .simulator-panel {
-            flex: 1.2;
+            flex: 1.1;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -127,12 +147,12 @@
 
         .phone-wrapper {
             width: 100%;
-            max-width: 420px;
-            height: 690px;
+            max-width: 440px;
+            height: 710px;
             background: #111;
-            border-radius: 2.5rem;
+            border-radius: 2.8rem;
             border: 8px solid #222;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.6), 0 0 30px rgba(0, 117, 201, 0.15);
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -160,19 +180,20 @@
             justify-content: space-between;
             color: white;
             flex-shrink: 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
 
         .wa-header-left { display: flex; align-items: center; gap: 0.8rem; }
-        .wa-avatar { width: 36px; height: 36px; border-radius: 50%; background: #0075C9; display: flex; align-items: center; justify-content: center; font-weight: 800; }
+        .wa-avatar { width: 38px; height: 38px; border-radius: 50%; background: #0075C9; display: flex; align-items: center; justify-content: center; font-weight: 800; border: 2px solid #ffffff; }
         .wa-info h3 { font-size: 0.95rem; font-weight: 600; }
-        .wa-info p { font-size: 0.75rem; color: #00A3E0; }
+        .wa-info p { font-size: 0.75rem; color: #38bdf8; }
 
         .header-call-icon {
-            background: rgba(16, 185, 129, 0.2);
+            background: rgba(16, 185, 129, 0.25);
             border: 1px solid #10b981;
             color: #34d399;
-            width: 32px;
-            height: 32px;
+            width: 34px;
+            height: 34px;
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -181,83 +202,85 @@
             transition: all 0.2s ease;
         }
 
-        .header-call-icon:hover { background: #10b981; color: white; }
+        .header-call-icon:hover { background: #10b981; color: white; transform: scale(1.05); }
 
         .wa-chat-area {
             flex: 1;
             background: var(--wa-bg);
             background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
-            padding: 1rem;
+            padding: 1.1rem;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 0.8rem;
+            gap: 0.9rem;
         }
 
         .msg-bubble {
             max-width: 88%;
-            padding: 0.7rem 0.9rem;
+            padding: 0.75rem 0.95rem;
             border-radius: 0.8rem;
             font-size: 0.88rem;
             line-height: 1.45;
             color: #111;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.12);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.15);
             white-space: pre-wrap;
         }
 
-        .msg-user { background: #e0f2fe; border-left: 3px solid #0075C9; align-self: flex-end; }
+        .msg-user { background: #e0f2fe; border-left: 3.5px solid #0075C9; align-self: flex-end; }
         .msg-assistant { background: #ffffff; align-self: flex-start; }
 
         .chips-container {
             display: flex;
             flex-direction: column;
-            gap: 0.4rem;
-            margin-top: 0.6rem;
+            gap: 0.45rem;
+            margin-top: 0.7rem;
             border-top: 1px solid #e2e8f0;
-            padding-top: 0.5rem;
+            padding-top: 0.6rem;
         }
 
         .quick-chip {
             background: #f0f9ff;
-            border: 1px solid #0075C9;
+            border: 1.5px solid #0075C9;
             color: #003781;
-            padding: 0.5rem 0.8rem;
-            border-radius: 1rem;
-            font-size: 0.83rem;
-            font-weight: 600;
+            padding: 0.55rem 0.9rem;
+            border-radius: 1.2rem;
+            font-size: 0.84rem;
+            font-weight: 700;
             cursor: pointer;
             text-align: center;
             transition: all 0.2s ease;
+            box-shadow: 0 1px 4px rgba(0, 117, 201, 0.15);
         }
 
         .quick-chip:hover {
-            background: #e0f2fe;
+            background: #0075C9;
+            color: white;
             transform: translateY(-1px);
         }
 
         .wa-input-bar {
             background: #f0f2f5;
-            padding: 0.6rem;
+            padding: 0.65rem 0.8rem;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.6rem;
             border-top: 1px solid #e3e7eb;
         }
 
         .wa-input {
             flex: 1;
-            padding: 0.55rem 0.9rem;
+            padding: 0.6rem 1rem;
             border-radius: 1.5rem;
             border: 1px solid #ffffff;
             outline: none;
-            font-size: 0.88rem;
+            font-size: 0.9rem;
             background: white;
             color: #333;
         }
 
         .wa-btn {
-            width: 34px;
-            height: 34px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             background: #0075C9;
             border: none;
@@ -266,33 +289,45 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
+            transition: transform 0.2s ease;
         }
+
+        .wa-btn:hover { transform: scale(1.05); }
 
         .upload-btn { background: #003781; }
 
         .intel-panel {
-            flex: 1.8;
+            flex: 1.9;
             background: var(--card-bg);
             border: 1px solid var(--border);
-            border-radius: 1.5rem;
-            backdrop-filter: blur(10px);
-            padding: 1.8rem;
+            border-radius: 1.8rem;
+            backdrop-filter: blur(16px);
+            padding: 2rem;
             display: flex;
             flex-direction: column;
-            gap: 1.2rem;
+            gap: 1.4rem;
             overflow-y: auto;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
         }
 
-        .meta-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
-        .meta-card { background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border); padding: 1rem; border-radius: 0.8rem; display: flex; flex-direction: column; gap: 0.3rem; }
-        .meta-card label { font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
-        .meta-card span { font-size: 1rem; font-weight: 600; color: var(--text-light); }
+        .meta-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.2rem; }
+        .meta-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            padding: 1.1rem;
+            border-radius: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+        .meta-card label { font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; letter-spacing: 0.5px; }
+        .meta-card span { font-size: 1.05rem; font-weight: 700; color: var(--text-light); }
 
-        .intel-block { display: flex; flex-direction: column; gap: 0.5rem; }
-        .intel-block label { font-size: 0.85rem; font-weight: 600; color: var(--secondary); text-transform: uppercase; }
-        .intel-content { background: rgba(255, 255, 255, 0.01); border: 1px solid var(--border); padding: 1rem; border-radius: 0.8rem; line-height: 1.5; font-size: 0.95rem; }
+        .intel-block { display: flex; flex-direction: column; gap: 0.6rem; }
+        .intel-block label { font-size: 0.85rem; font-weight: 700; color: var(--secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+        .intel-content { background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border); padding: 1.2rem; border-radius: 1rem; line-height: 1.65; font-size: 0.95rem; }
 
-        .action-highlight { background: rgba(0, 117, 201, 0.12); border-color: rgba(0, 117, 201, 0.3); color: #93c5fd; font-weight: 600; }
+        .action-highlight { background: rgba(0, 117, 201, 0.15); border-color: rgba(0, 163, 224, 0.4); color: #93c5fd; font-weight: 600; }
 
         #file-input { display: none; }
 
@@ -311,7 +346,7 @@
 
         .voice-call-header { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; }
         .voice-call-avatar-ring {
-            width: 90px; height: 90px;
+            width: 95px; height: 95px;
             border-radius: 50%;
             background: linear-gradient(135deg, #0075C9, #00A3E0);
             display: flex; align-items: center; justify-content: center;
@@ -335,21 +370,21 @@
             100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
         }
 
-        .voice-call-name { font-size: 1.2rem; font-weight: 700; }
-        .voice-call-status { font-size: 0.85rem; color: #38bdf8; font-weight: 600; }
+        .voice-call-name { font-size: 1.25rem; font-weight: 700; }
+        .voice-call-status { font-size: 0.88rem; color: #38bdf8; font-weight: 600; }
         .voice-call-timer { font-size: 1rem; color: #94a3b8; font-weight: 600; font-family: monospace; }
 
         .voice-transcript-box {
             width: 100%;
             background: rgba(255, 255, 255, 0.06);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 0.9rem;
+            padding: 1rem;
             border-radius: 1rem;
             min-height: 85px;
             max-height: 130px;
             overflow-y: auto;
-            font-size: 0.85rem;
-            line-height: 1.4;
+            font-size: 0.88rem;
+            line-height: 1.45;
             color: #e2e8f0;
             text-align: center;
         }
@@ -369,12 +404,12 @@
         }
 
         .voice-call-controls { display: flex; align-items: center; gap: 1.2rem; }
-        .call-btn-circle { width: 50px; height: 50px; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; color: white; transition: all 0.2s ease; }
+        .call-btn-circle { width: 52px; height: 52px; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; color: white; transition: all 0.2s ease; }
         .btn-mute { background: rgba(255, 255, 255, 0.15); }
         .btn-mute.active { background: #eab308; }
         .btn-upload-voice { background: rgba(0, 117, 201, 0.4); border: 1px solid #00A3E0; }
         .btn-upload-voice:hover { background: #0075C9; }
-        .btn-end-call { background: #ef4444; width: 58px; height: 58px; box-shadow: 0 0 20px rgba(239, 68, 68, 0.5); }
+        .btn-end-call { background: #ef4444; width: 60px; height: 60px; box-shadow: 0 0 20px rgba(239, 68, 68, 0.5); }
         .btn-end-call:hover { transform: scale(1.05); }
     </style>
 </head>
@@ -386,7 +421,7 @@
         </a>
         
         <div class="header-actions">
-            <button class="ux-btn" style="background:rgba(255,255,255,0.08); color:#f8fafc;" onclick="resetSession()" title="Démarrer une nouvelle conversation vierge">🔄 Nouvelle Conversation</button>
+            <button class="ux-btn" style="background:rgba(255,255,255,0.08); color:#f8fafc; border:1px solid var(--border);" onclick="resetSession()" title="Démarrer une nouvelle conversation vierge">🔄 Nouvelle Conversation</button>
 
             <button class="btn-start-call" onclick="startVoiceCall()">
                 <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
@@ -419,7 +454,7 @@
                 <div class="voice-call-overlay" id="voice-call-modal">
                     <div class="voice-call-header">
                         <div class="voice-call-avatar-ring" id="call-avatar-ring">
-                            <svg width="42" height="42" viewBox="0 0 100 100" fill="none">
+                            <svg width="45" height="45" viewBox="0 0 100 100" fill="none">
                                 <circle cx="50" cy="50" r="45" fill="#0075C9"/>
                                 <path d="M50 20L28 32V54C28 68 50 78 50 78C50 78 72 68 72 54V32L50 20Z" fill="#00A3E0"/>
                                 <path d="M42 46L48 52L60 40" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
@@ -498,9 +533,9 @@ Pour mieux personnaliser votre simulation, comment vous appelez-vous et dans que
         </div>
 
         <div class="intel-panel">
-            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:0.8rem;">
-                <h2>Intelligence Commerciale & Handover</h2>
-                <span class="badge-status" id="intel-channel-badge" style="background:rgba(0,117,201,0.2); color:#93c5fd; padding:0.3rem 0.8rem; border-radius:1rem; font-weight:600; font-size:0.8rem;">WhatsApp</span>
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:1rem;">
+                <h2 style="font-size:1.4rem; font-weight:700;">Intelligence Commerciale & Handover</h2>
+                <span class="badge-status" id="intel-channel-badge" style="background:rgba(0,117,201,0.25); color:#38bdf8; border:1px solid rgba(0,163,224,0.4); padding:0.35rem 0.9rem; border-radius:1rem; font-weight:700; font-size:0.82rem;">WhatsApp</span>
             </div>
             
             <div class="meta-grid">
